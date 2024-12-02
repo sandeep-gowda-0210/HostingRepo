@@ -20,7 +20,11 @@ async function addBooks(req, res) {
 async function borrowBook(req, res) {
     try {
         const borrowdata = req.body;
-        let availability = await Book.findById(borrowdata.id);
+
+        console.log(borrowdata);
+        let availability = await Book.findById(borrowdata.bookid);
+        console.log(availability);
+
         if (availability) {
             const borrow = new Borrow(borrowdata)
             const data = await borrow.save();
