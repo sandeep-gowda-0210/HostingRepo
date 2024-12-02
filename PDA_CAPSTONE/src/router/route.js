@@ -7,7 +7,7 @@ let router = express.Router();
 
 router.route("/login").post(login);
 router.route("/users").get(authenticate, getUsers);
-router.route("/users").post(authenticate, addUser);
+router.route("/users").post(addUser);
 router.route("/books").get(authenticate, getBooks);
 router.route("/books").post(authenticate, addBooks);
 router.route("/books/:id").put(authenticate, updateBook);
