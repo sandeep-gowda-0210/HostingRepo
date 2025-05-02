@@ -41,15 +41,16 @@ export default function Home({children}:{children: React.ReactNode}){
     if(userdata){{
       setUser(userdata[0]);
       setLoading(false);
-    }
+    } 
   }
 }
   catch(error){
     console.log(error);
+    
   }
-  }
-  useEffect(()=>{
-    fetchData();
+}
+useEffect(()=>{
+  fetchData();
   },[])
 
   return <UserContext.Provider value={{user,setUser,refreshUser:fetchData}}>
