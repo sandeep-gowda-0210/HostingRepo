@@ -107,7 +107,13 @@ export const sendScheduledMessage=async ()=>{
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  const now = new Date().toISOString();
+  function getLocalDateTimeString() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const localTime = new Date(now.getTime() - offset * 60 * 1000);
+    return localTime.toISOString().slice(0, 16);
+  }
+  const now = getLocalDateTimeString();
   console.log("time",now);
   
   const { data: messages, error } = await supabaseSuperClient
