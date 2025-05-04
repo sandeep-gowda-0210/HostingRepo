@@ -36,7 +36,7 @@ function RecentChats() {
   return (
     <div className="p-4 pb-0 h-full box-border flex flex-col">
       <h2 className="text-lg font-semibold h-fit">Recent Chats</h2>
-      <div className="mt-4 border rounded p-4 h-full overflow-y-auto">
+      <div className="mt-4 border rounded p-4 max-h-full h-full overflow-y-auto">
         {loading ? (
           <div>Loading...</div>
         ) : contacts===null || contacts.length === 0 ? (
@@ -47,7 +47,7 @@ function RecentChats() {
               <li
                 key={contact.user_id}
                 onClick={() => handleContactClick(contact)}
-                className={`flex items-center space-x-3 p-2 rounded hover:bg-gray-400 ${selectedUser?.user_id==contact.user_id?"bg-gray-200":null}  transition-all hover:ease-in-out duration-500 cursor-pointer`}>
+                className={`flex items-center space-x-3 p-2 rounded hover:bg-gray-400 ${selectedUser?.user_id==contact.user_id?"bg-gray-200":null}  transition-all hover:ease-in-out duration-300 cursor-pointer`}>
                 <img
                   src={contact.profile_url}
                   alt={`${contact.user_name}'s profile`}

@@ -6,6 +6,7 @@ import { parse } from "cookie";
 import { pushMessage } from "@/services/chatService";
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
+import { setSocketServer, setUserSocket,getUserSocketMap, removeUserSocket } from "@/utils/socketStore";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {
@@ -13,11 +14,12 @@ type NextApiResponseWithSocket = NextApiResponse & {
     };
   };
 };
-const userSocketMap = new Map<string, string>(); // user_id -> socket.id
+
 
 export default function handler(req: NextApiRequest, res: NextApiResponseWithSocket) {
   if (res.socket.server.io) {
     console.log("✅ Socket.IO server already running");
+    setSocketServer(res.socket.server.io);
     res.end();
     return;
   }
@@ -45,7 +47,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
       const { data, error } = await getUser(token);
       if (data?.length) {
         const { user_id } = data[0];
-        userSocketMap.set(user_id, socket.id);
+        setUserSocket(user_id, socket.id);
         console.log(`✅ User ${user_id} connected with socket ${socket.id}`);
         console.log("🔌 New client connected:", socket.id);
         socket.on("send-message", async (message: Message) => {
@@ -55,12 +57,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
             console.log("Token is not provided");
           if (token) {
             const error = await pushMessage(token, message);
-            if (error===null) {
+            if (error!==null) {
               console.log("Error Occured pushing message", error);
             }
             else {
-              let receiver_socket_id = userSocketMap.get(message.receiver_id)
-              console.log(receiver_socket_id);
+              socket.emit("sent-message");
+              let receiver_socket_id = getUserSocketMap().get(message.receiver_id)
+              // console.log(receiver_socket_id);
 
               if (receiver_socket_id)
                 io.to(receiver_socket_id).emit("receive-message", message);
@@ -68,9 +71,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
           }
         });
 
+
         socket.on("disconnect", () => {
           if (user_id) {
-            userSocketMap.delete(user_id);
+            removeUserSocket(user_id);
             console.log(`❌ User ${user_id} disconnected`);
           }
           console.log("❌ Client disconnected:", socket.id);
@@ -82,9 +86,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
       console.error("Auth error while fetching data");
     }
   });
-
   res.socket.server.io = io;
-
-
+  setSocketServer(res.socket.server.io);
   res.end();
 }

@@ -1,6 +1,8 @@
 'use client'
 import React, { useState } from "react";
 import Navbar from "@/components/navbar/Navbar";
+import socket from "@/utils/socket";
+
 import { useEffect,createContext,useContext } from "react";
 import Layout from "@/components/layout/Layout";
 export type User={
@@ -36,11 +38,48 @@ const UserContext = createContext<UserContextType>({
   setSelectedUser:async ()=>{}
 });
 
+
+const initSocket = async (isMounted:Boolean) => {
+  try {
+    const res = await fetch('/api/socket');
+    if (res.ok && isMounted) {
+      console.log("✅ Socket API route initialized");
+      socket.connect();
+    }
+  } catch (error) {
+    console.error("❌ Failed to fetch /api/socket:", error);
+  }
+};
+
+
 export default function Home({children}:{children: React.ReactNode}){
   const [user,setUser] = useState<User|null>(null);
   const [loading, setLoading] = useState<Boolean>(true);
   const [selectedUser,setSelectedUser] = useState<Contact|null>(null);
 
+  useEffect(() => {
+    let isMounted:Boolean = true;
+
+    socket.on("connect", () => {
+      console.log("✅ Connected:", socket.id);
+    });
+
+
+    socket.on("receive-message", (msg) => {
+      console.log("📥 Received:", msg);
+    });
+
+    // fetch('/api/socket').then(()=>{socket.connect()});
+    initSocket(isMounted);
+
+    
+
+    return () => {
+      socket.off("connect");
+      socket.off("receive-message");
+      socket.disconnect();
+    };
+  }, [])
 
   const fetchData = async()=>{
     try{
@@ -67,7 +106,7 @@ useEffect(()=>{
 
   return <UserContext.Provider value={{user,setUser,refreshUser:fetchData,setSelectedUser,selectedUser}}>
     {/* <Navbar/> */}
-    {loading?<div className="flex w-full h-screen justify-center items-center text-6xl font-bold text-gray-400">Loading....</div>:<div>
+    {loading?<div className="flex w-full h-screen justify-center items-center text-6xl font-bold text-gray-400">Loading....</div>:<div className="max-h-[100vh]">
     {/* <div className="flex w-full justify-center h-[5rem] items-center text-2xl font-bold text-gray-400">
     
       Welcome {user?.first_name}</div> */}
