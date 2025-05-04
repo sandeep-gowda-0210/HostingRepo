@@ -5,7 +5,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
+    const pathname = usePathname() || '/';
     return (<div className="flex h-full overflow-hidden">
         <AnimatePresence mode="wait">
             <motion.div

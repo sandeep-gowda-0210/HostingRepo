@@ -8,7 +8,9 @@ export async function GET(req:Request){
     if(!token){
         return NextResponse.json({error:'unatutorized!!'},{status:401})
     }
-    let profile_data = await getUser(token);
+    let {data:profile_data,error} = await getUser(token);
+    if(!profile_data || error)
+        console.error("Auth Error",error)
     if(profile_data){
         return NextResponse.json({profile_data});
     }

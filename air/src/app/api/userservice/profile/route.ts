@@ -1,7 +1,6 @@
 import cookie from 'cookie';
 import { uploadProfile } from '@/services/userService';
 import { NextResponse } from 'next/server';
-import { cache } from 'react';
 export async function POST(req:Request){
     let cookies = cookie.parse(req.headers.get('cookie')||'');
     let token = cookies['login-token']!;

@@ -2,7 +2,10 @@
 import { Server as IOServer } from "socket.io";
 import { Server as HTTPServer } from "http";
 import type { NextApiRequest, NextApiResponse } from "next";
-
+import { parse } from "cookie";
+import { pushMessage } from "@/services/chatService";
+import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
+import { getUser } from "@/services/authService";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {
@@ -10,13 +13,14 @@ type NextApiResponseWithSocket = NextApiResponse & {
     };
   };
 };
+const userSocketMap = new Map<string, string>(); // user_id -> socket.id
 
 export default function handler(req: NextApiRequest, res: NextApiResponseWithSocket) {
   if (res.socket.server.io) {
     console.log("✅ Socket.IO server already running");
     res.end();
     return;
-  } 
+  }
 
   console.log("🆕 Setting up new Socket.IO server");
 
@@ -26,24 +30,61 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
       origin: "*",
       methods: ["GET", "POST"],
     },
+    pingTimeout: 20000,
+    maxHttpBufferSize: 1e8,
+    perMessageDeflate: false,
+  });
+
+
+  io.on("connection", async (socket) => {
+    const cookieHeader = socket.handshake.headers.cookie || "";
+    console.log("heeeeeey ", cookieHeader);
+    const cookies = parse(cookieHeader);
+    const token = cookies['login-token'];
+    if (token) {
+      const { data, error } = await getUser(token);
+      if (data?.length) {
+        const { user_id } = data[0];
+        userSocketMap.set(user_id, socket.id);
+        console.log(`✅ User ${user_id} connected with socket ${socket.id}`);
+        console.log("🔌 New client connected:", socket.id);
+        socket.on("send-message", async (message: Message) => {
+          console.log(" client connected:", socket.id);
+          console.log("📨 Message received:", message, " from ", socket.id);
+          if (!token)
+            console.log("Token is not provided");
+          if (token) {
+            const error = await pushMessage(token, message);
+            if (error===null) {
+              console.log("Error Occured pushing message", error);
+            }
+            else {
+              let receiver_socket_id = userSocketMap.get(message.receiver_id)
+              console.log(receiver_socket_id);
+
+              if (receiver_socket_id)
+                io.to(receiver_socket_id).emit("receive-message", message);
+            }
+          }
+        });
+
+        socket.on("disconnect", () => {
+          if (user_id) {
+            userSocketMap.delete(user_id);
+            console.log(`❌ User ${user_id} disconnected`);
+          }
+          console.log("❌ Client disconnected:", socket.id);
+        });
+      } else if (error || !data) {
+        console.error("User profile not found ", error);
+      }
+    } else {
+      console.error("Auth error while fetching data");
+    }
   });
 
   res.socket.server.io = io;
 
-  io.on("connection", (socket) => {
-    console.log("🔌 New client connected:", socket.id);
-    
-    socket.on("send-message", (message) => {
-      console.log(" client connected:", socket.id);
-      console.log("📨 Message received:", message, " from ", socket.id);
-
-      socket.emit("receive-message", message);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Client disconnected:", socket.id);
-    });
-  });
 
   res.end();
 }

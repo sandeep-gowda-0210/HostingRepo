@@ -6,17 +6,22 @@ import { useUserData } from "../layout"
 import RecentChats from "./recent-chats/page";
 import ChatWindow from "./chat-window/page";
 export default function Chat() {
-  let { user } = useUserData();
-  let [email, setEmail] = useState<string | null>(null);
-  useEffect(() => {
-    const savedUser: { email?: string } = JSON.parse(localStorage.getItem('user') || '{}');
-    if (savedUser["email"]) {
-      setEmail(savedUser["email"]);
+  const initSocket = async (isMounted:Boolean) => {
+    try {
+      const res = await fetch('/api/socket');
+      if (res.ok && isMounted) {
+        console.log("✅ Socket API route initialized");
+        socket.connect();
+      }
+    } catch (error) {
+      console.error("❌ Failed to fetch /api/socket:", error);
     }
+  };
+  useEffect(() => {
+    let isMounted:Boolean = true;
 
     socket.on("connect", () => {
       console.log("✅ Connected:", socket.id);
-      socket.emit("send-message", "Test from client");
     });
 
 
@@ -24,8 +29,10 @@ export default function Chat() {
       console.log("📥 Received:", msg);
     });
 
+    // fetch('/api/socket').then(()=>{socket.connect()});
+    initSocket(isMounted);
 
-    socket.connect();
+    
 
     return () => {
       socket.off("connect");
@@ -34,13 +41,13 @@ export default function Chat() {
     };
   }, [])
   return <div className="flex h-full w-full justify-center text-5xl text-blue-300 font-extralight">
-    <div className="flex w-full">
-      <div className="w-[30%] border-2">
+    <div className="flex w-full h-full">
+      <div className="w-[30%]">
         <RecentChats />
       </div>
-      <div className=" w-[70%] border-2">
+      <div className=" w-[70%] h-full">
         <ChatWindow />
       </div>
     </div>
   </div>
-}
+} 

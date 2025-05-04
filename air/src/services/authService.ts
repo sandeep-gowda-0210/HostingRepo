@@ -19,15 +19,15 @@ export const getUser = async(token:string)=>{
   const { data: { user }, error: authError } = await supabaseWithToken.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Auth Error' }, { status: 401 });
+    return { data: null, error: "Auth Error" };
   }
 
-  const { data: profile_data, error: profileError } = await supabaseWithToken
+  const { data, error } = await supabaseWithToken
     .from('Profile')
     .select('user_id,user_name,first_name,last_name,email_id,profile_url,status,bio')
     .eq('user_id', user.id);
 
-  return profile_data;
+  return {data,error};
 }
 
 export const signUp = async (email: string, password: string, username:string, firstname:string) => {
