@@ -1,19 +1,55 @@
-import { useState } from "react";
+import { useUserData } from "@/app/pages/home/layout";
+import { useEffect, useState } from "react";
 
 export default function AutoReplySettings() {
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
   const [historyDays, setHistoryDays] = useState(7);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  let { user, selectedUser } = useUserData();
+  
+  useEffect(()=>{
+    if(user?.user_id && selectedUser?.user_id){
+    const fetchAutoReplyData = async()=>{
+      const res = await fetch(`/api/chatservice/autoResponse/getAutoResponse?from_user_id=${user?.user_id}&to_user_id=${selectedUser?.user_id}`)
+      const data = await res.json();
+      if(data.error!==undefined){
+     setStatus(`error ${data.error}`);
+      }
+      if(data.data.history_period){
+        setAutoReplyEnabled(true);
+        setHistoryDays(data.data.history_period);
+      }
+    }
+    
+    fetchAutoReplyData();
+  }
+  else{
+    setStatus("select user first");
+  }
+  
+  },[])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setStatus("");
 
+
     try {
       // Call your API or handler here
-      await new Promise((res) => setTimeout(res, 1000)); // Simulate delay
+      // await new Promise((res) => setTimeout(res, 1000)); // Simulate delay
+      if(user?.user_id && selectedUser?.user_id){
+        let user_id = user.user_id;
+        let selecteduser_id = selectedUser.user_id
+      await fetch("/api/chatservice/autoResponse/setAutoResponse",
+        {
+          method: 'POST',
+          body: JSON.stringify({ autoReplyEnabled, historyDays, user_id,selecteduser_id  }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
 
       // Example: replace with your actual API logic
       console.log({
@@ -22,6 +58,10 @@ export default function AutoReplySettings() {
       });
 
       setStatus("Auto-reply settings saved successfully!");
+    }
+    else{
+      setStatus("select user first");
+    }
     } catch (err) {
       setStatus("Failed to save settings.");
     } finally {
@@ -34,17 +74,22 @@ export default function AutoReplySettings() {
       onSubmit={handleSubmit}
       className="space-y-10 mx-auto text-2xl rounded shadow flex flex-col justify-center items-center h-full w-full"
     >
-      <div className=" flex">
-        <label className="block mb-1 font-medium">Enable Auto-Reply</label>
-        <input
-          type="checkbox"
-          checked={autoReplyEnabled}
-          onChange={(e) => setAutoReplyEnabled(e.target.checked)}
-          className="scale-150 cursor-pointer"
-        />
+      <div className=" flex gap-5">
+        <label className="text-2xl font-medium">Enable Auto-Reply</label>
+        <button
+          type="button"
+          onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
+          className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 ${autoReplyEnabled ? 'bg-green-500' : 'bg-gray-300'
+            }`}
+        >
+          <span
+            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ${autoReplyEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+          />
+        </button>
       </div>
 
-      <div className="">
+      <div className="flex flex-col items-center">
         <label className="block mb-1 font-medium">
           Days of History to Consider
         </label>
@@ -55,7 +100,7 @@ export default function AutoReplySettings() {
           value={historyDays}
           onChange={(e) => setHistoryDays(Number(e.target.value))}
           required
-          className="border p-2 w-full text-black rounded bg-[#a5a4a4]"
+          className="border p-2 w-1/2 text-black rounded bg-[#a5a4a4]"
         />
       </div>
 

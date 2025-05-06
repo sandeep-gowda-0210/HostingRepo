@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
-import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 import { getSocketServer, getUserSocketMap } from "@/utils/socketStore";
-export type scheduleMessageType={sender_id:string,receiver_id:string, message_content:string, send_time:Timestamp};
+export type scheduleMessageType={sender_id:string,receiver_id:string, message_content:string, send_time:Date};
 
 export const getContacts = async(token:string)=>{
     const supabaseWithToken = createClient(
@@ -45,11 +44,12 @@ export const pushMessage = async(token:string,messagePayload:Message)=>{
       }
     );
 
-    console.log("message inserting", messagePayload);
+    // console.log("message inserting", messagePayload);
     
   const { error } = await supabaseWithToken
     .from('Message')
     .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:messagePayload.content});
+    if(error)
     console.log("message Data inserted error", error);
     
   return error;
@@ -101,21 +101,20 @@ export const setScheduleMessage = async(token:string, scheduleData:scheduleMessa
   return error;
 }
 
+export function getLocalDateTimeString() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  const localTime = new Date(now.getTime() - offset * 60 * 1000);
+  return localTime.toISOString().slice(0, 16);
+}
 
 export const sendScheduledMessage=async ()=>{
   const supabaseSuperClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  function getLocalDateTimeString() {
-    const now = new Date();
-    const offset = now.getTimezoneOffset();
-    const localTime = new Date(now.getTime() - offset * 60 * 1000);
-    return localTime.toISOString().slice(0, 16);
-  }
   const now = getLocalDateTimeString();
-  console.log("time",now);
-  
+  // console.log("time",now);
   const { data: messages, error } = await supabaseSuperClient
     .from('ScheduleMessage')
     .select('*')
@@ -152,7 +151,7 @@ export const sendScheduledMessage=async ()=>{
     if (!insertError) {
       const io = getSocketServer();
       const userSocketMap = getUserSocketMap();
-      console.log("io ", io, "usersocketMap ", userSocketMap);
+      // console.log("io ", io, "usersocketMap ", userSocketMap);
       
       // if (io && userSocketMap.has(receiver_id)) {
       //   const socketId = userSocketMap.get(receiver_id);
@@ -180,3 +179,7 @@ export const sendScheduledMessage=async ()=>{
 
   return NextResponse.json({ message: 'Messages sent' });
 }
+
+
+
+

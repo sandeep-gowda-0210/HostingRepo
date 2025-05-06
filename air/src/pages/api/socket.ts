@@ -4,9 +4,11 @@ import { Server as HTTPServer } from "http";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { parse } from "cookie";
 import { pushMessage } from "@/services/chatService";
+
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
 import { setSocketServer, setUserSocket,getUserSocketMap, removeUserSocket } from "@/utils/socketStore";
+import { assert_generate_autoreply, autoReplyOllama } from "@/services/autoReplyService";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {
@@ -40,7 +42,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
 
   io.on("connection", async (socket) => {
     const cookieHeader = socket.handshake.headers.cookie || "";
-    console.log("heeeeeey ", cookieHeader);
+    // console.log("heeeeeey ", cookieHeader);
     const cookies = parse(cookieHeader);
     const token = cookies['login-token'];
     if (token) {
@@ -52,22 +54,38 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
         console.log("🔌 New client connected:", socket.id);
         socket.on("send-message", async (message: Message) => {
           console.log(" client connected:", socket.id);
-          console.log("📨 Message received:", message, " from ", socket.id);
+          // console.log("📨 Message received:", message, " from ", socket.id);
           if (!token)
             console.log("Token is not provided");
           if (token) {
             const error = await pushMessage(token, message);
+            console.log("error: ",error);
+            
             if (error!==null) {
               console.log("Error Occured pushing message", error);
             }
             else {
+              // console.log("entered");
               socket.emit("sent-message");
               let receiver_socket_id = getUserSocketMap().get(message.receiver_id)
-              // console.log(receiver_socket_id);
-
+              
               if (receiver_socket_id)
                 io.to(receiver_socket_id).emit("receive-message", message);
-            }
+              const {data:reply,error:autoGenError} = await assert_generate_autoreply(token, message.sender_id,message.receiver_id,message.content);
+              if(autoGenError!==null && reply === null){
+                console.log("No reply generated", autoGenError);
+                
+              }
+              if(reply!==null){
+                // console.log("Reply generated successfully", reply);
+                socket.emit("receive-message",reply);
+                if (receiver_socket_id)
+                  io.to(receiver_socket_id).emit("receive-message", reply);
+              }
+                
+              }
+              // console.log(receiver_socket_id);
+
           }
         });
 

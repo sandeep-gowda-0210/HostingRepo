@@ -7,7 +7,7 @@ export async function POST(req:Request){
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const user_id = formData.get('user_id')?.toString();
-    console.log(file.name, user_id);
+    // console.log(file.name, user_id);
     
     if(!file || !user_id){
         return NextResponse.json({error:"no file uploaded"},{status:400});

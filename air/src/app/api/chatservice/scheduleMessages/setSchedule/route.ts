@@ -11,9 +11,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'unatutorized!!' }, { status: 401 })
     }
     let error = await setScheduleMessage(token, data);
-    console.log("error:", error);
     
     if (error !== null) {
+        console.log("error:", error);
         return NextResponse.json({ error }, { status: 401 });
     }
     return NextResponse.json({ message: 'successfull' }, { status: 200 })

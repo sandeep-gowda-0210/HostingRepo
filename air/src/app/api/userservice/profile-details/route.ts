@@ -8,7 +8,7 @@ export async function POST(req:Request){
     const { searchParams } = new URL(req.url);
     const user_id = searchParams.get('user_id');
     let userData = await req.json();
-    console.log(userData, "token: ",token, " user Id", user_id);
+    // console.log(userData, "token: ",token, " user Id", user_id);
     if(!user_id){
         return NextResponse.json({error:"No user id specified"},{status:401});
     }

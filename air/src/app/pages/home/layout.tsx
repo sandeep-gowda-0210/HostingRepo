@@ -42,6 +42,7 @@ const UserContext = createContext<UserContextType>({
 const initSocket = async (isMounted:Boolean) => {
   try {
     const res = await fetch('/api/socket');
+    
     if (res.ok && isMounted) {
       console.log("✅ Socket API route initialized");
       socket.connect();

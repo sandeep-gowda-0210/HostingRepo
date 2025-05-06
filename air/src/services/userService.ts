@@ -14,19 +14,19 @@ export const uploadProfile = async(file:File , user_id:string, token:string) =>{
       );
     const fileExt = file.name.split('.').pop();
     const filePath = `${user_id}/profile.${fileExt}`;
-    console.log("entered");
+    // console.log("entered");
     
     const {error:uploadError} = await supabaseWithToken.storage.from('profile-pictures').upload(filePath,file,{
         upsert:true,
         contentType:file.type
     });
-    console.log("entered->",uploadError);
+    // console.log("entered->",uploadError);
 
     if (uploadError){
         return {data:null, uploadError};
     }
     const {data:publicUrlData} = await supabaseWithToken.storage.from('profile-pictures').getPublicUrl(filePath);
-    console.log(publicUrlData);
+    // console.log(publicUrlData);
     
     const {data:updatedData,error:updateProfileURLError} = await supabaseWithToken.from('Profile').update({profile_url:publicUrlData?.publicUrl}).eq('user_id',user_id)
     if(updateProfileURLError || !updatedData)

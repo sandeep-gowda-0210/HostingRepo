@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { signUp } from "@/services/authService";
 export async function POST(req: Request){
-    console.log("entered");
+    // console.log("entered");
     const {email,password, username, firstname} = await req.json();
     const {data:token, error} = await signUp(email, password, username, firstname);
-    console.log("token" ,token);
+    // console.log("token" ,token);
     if (error || !token) {
         return NextResponse.json({ error: 'Failed signUp' }, { status: 401 });
       }
