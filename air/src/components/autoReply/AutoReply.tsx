@@ -7,19 +7,36 @@ export default function AutoReplySettings() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   let { user, selectedUser } = useUserData();
+  const [fetchLoad, setFetchLoad] = useState(true);
+
   
   useEffect(()=>{
     if(user?.user_id && selectedUser?.user_id){
     const fetchAutoReplyData = async()=>{
       const res = await fetch(`/api/chatservice/autoResponse/getAutoResponse?from_user_id=${user?.user_id}&to_user_id=${selectedUser?.user_id}`)
-      const data = await res.json();
+      const data = (await res.json()).data;
+      console.log("hdfdk", data);
+      
+      try{
       if(data.error!==undefined){
+        console.log("1");
+        
      setStatus(`error ${data.error}`);
       }
-      if(data.data.history_period){
+      if(data.history_period !==undefined ){
+        console.log("2");
+        
         setAutoReplyEnabled(true);
-        setHistoryDays(data.data.history_period);
+        setHistoryDays(data.history_period);
       }
+    }
+    catch(error){
+    console.error("There is a error ", error);}
+    finally{
+      setFetchLoad(false);
+    }
+    
+      
     }
     
     fetchAutoReplyData();
@@ -70,6 +87,7 @@ export default function AutoReplySettings() {
   };
 
   return (
+    fetchLoad?<div className="h-full w-full flex justify-center items-center">Loading...</div> : 
     <form
       onSubmit={handleSubmit}
       className="space-y-10 mx-auto text-2xl rounded shadow flex flex-col justify-center items-center h-full w-full"

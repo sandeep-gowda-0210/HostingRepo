@@ -182,4 +182,64 @@ export const sendScheduledMessage=async ()=>{
 
 
 
+export const getScheduledMessages=async (token:string, from_user_id:string, to_user_id:string)=>{
+  const supabaseWithToken = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
+  const now = getLocalDateTimeString();
+  // console.log("time",now);
+  const { data: messages, error } = await supabaseWithToken
+    .from('ScheduleMessage')
+    .select('*')
+    .eq('sender_id', from_user_id)
+    .eq('receiver_id', to_user_id)
+    // .gt('send_time', now)
 
+  if (error) {
+    console.error('Fetch error:', error);
+  return {data:null,error}
+  }
+
+  if (!messages || messages.length === 0) {
+  return {data:null,error:null}
+  }
+  
+  return {data:messages,error:null}
+}
+
+
+
+
+export const deleteScheduledMessage=async (token:string, message_id:string)=>{
+  const supabaseWithToken = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
+  const now = getLocalDateTimeString();
+  // console.log("time",now);
+ 
+  const { data, error } = await supabaseWithToken
+  .from('ScheduleMessage')
+  .delete()
+  .eq('id', message_id);
+  if (error!==null) {
+    console.error('Delete failed:', error.message);
+    return {data:null, error};
+  }
+  return {data,error:null};
+}

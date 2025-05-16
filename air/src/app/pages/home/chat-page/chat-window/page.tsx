@@ -24,6 +24,8 @@ function ChatWindow() {
   const [scheduleMessagePage, setScheduleMessagePage] = useState<Boolean>(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [autoReplyPage, setAutoReplyPage] = useState<Boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
 
   const scrollToBottom = () => {
@@ -114,6 +116,16 @@ useEffect(() => {
 
   }, [scheduleMessagePage])
 
+
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+
   return (!selectedUser || !socket.id ? <div className='flex justify-center items-center h-full border-2 rounded-2xl'>No chat Selected</div> : <div className="flex flex-col h-full border rounded shadow w-full">
     {/* Top Bar */}
     <div className="flex items-center justify-between p-4 border-b bg-blend-darken">
@@ -171,7 +183,24 @@ useEffect(() => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
           />
+          <input
+            type="file"
+            accept="image/*,video/*,.pdf,.docx,.xlsx,.txt"
+            onChange={handleFileChange}
+            className="hidden"
+            ref={fileInputRef}
+          />
+
+          <button onClick={() => fileInputRef.current?.click()} className=' p-1 px-2 mx-2 rounded-lg hover:bg-[#2f2f2f] transition-all duration-300 ease-in-out cursor-pointer'>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-paperclip-icon lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>
+          </button>
           <button
             onClick={handleSend}
             className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
