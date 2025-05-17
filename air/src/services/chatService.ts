@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getSocketServer, getUserSocketMap } from "@/utils/socketStore";
+import { base } from "framer-motion/m";
 export type scheduleMessageType={sender_id:string,receiver_id:string, message_content:string, send_time:Date};
 
 export const getContacts = async(token:string)=>{
@@ -45,14 +46,50 @@ export const pushMessage = async(token:string,messagePayload:Message)=>{
     );
 
     // console.log("message inserting", messagePayload);
+    if(messagePayload.file){
+      const { name, type, data: base64Data } = messagePayload.file;
+      if((typeof base64Data)==="string"){
+      const base64 = base64Data.split(",")[1];
+      const buffer = Buffer.from(base64, "base64");
+      const filePath = `messages/${Date.now()}-${name}`;
+      const { error } = await supabaseWithToken.storage
+      .from("sharefiles")
+      .upload(filePath, buffer, {
+        contentType: type,
+      });
+      if (error) {
+        console.error("Supabase upload error:", error.message);
+        return;
+      }
+  
+      const { data: publicUrlData } = await supabaseWithToken.storage
+        .from("sharefiles")
+        .getPublicUrl(filePath);
+        
+    messagePayload.file_url = publicUrlData.publicUrl;
+    }else {
+      console.error("Expected file data as base64 string, but got:", typeof base64Data);
+      return;
+    }
+    }
     
-  const { error } = await supabaseWithToken
+    if(messagePayload.file){
+       const { error } = await supabaseWithToken
     .from('Message')
-    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:messagePayload.content});
+    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:messagePayload.content,type:messagePayload.type, file_url:messagePayload.file_url||null, file_name:messagePayload.file?.name||null});
     if(error)
     console.log("message Data inserted error", error);
-    
   return error;
+}
+else{
+  const { error } = await supabaseWithToken
+    .from('Message')
+    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:messagePayload.content,type:messagePayload.type});
+    if(error)
+    console.log("message Data inserted error", error);
+  return error;
+}
+  
 }
 
 

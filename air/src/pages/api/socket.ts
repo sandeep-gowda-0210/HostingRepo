@@ -60,7 +60,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
           if (token) {
             const error = await pushMessage(token, message);
             console.log("error: ",error);
-            
             if (error!==null) {
               console.log("Error Occured pushing message", error);
             }
@@ -71,10 +70,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
               
               if (receiver_socket_id)
                 io.to(receiver_socket_id).emit("receive-message", message);
+              if(message.type==="text"){
               const {data:reply,error:autoGenError} = await assert_generate_autoreply(token, message.sender_id,message.receiver_id,message.content);
               if(autoGenError!==null && reply === null){
                 console.log("No reply generated", autoGenError);
-                
               }
               if(reply!==null){
                 // console.log("Reply generated successfully", reply);
@@ -82,10 +81,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
                 if (receiver_socket_id)
                   io.to(receiver_socket_id).emit("receive-message", reply);
               }
-                
               }
               // console.log(receiver_socket_id);
-
+            }
           }
         });
 
