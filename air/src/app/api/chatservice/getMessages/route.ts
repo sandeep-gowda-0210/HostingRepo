@@ -20,6 +20,8 @@ export async function GET(req:Request){
             return NextResponse.json({ messages: messageData }, { status: 200 });
 
     }
-    if(error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if(error){
+        console.log("errors: ",error);
+        
+    return NextResponse.json({ error: error.message }, { status: 500 });}
 }

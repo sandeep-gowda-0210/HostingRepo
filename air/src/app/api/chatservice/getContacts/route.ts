@@ -9,6 +9,7 @@ export async function GET(req:Request){
         return NextResponse.json({error:'unatutorized!!'},{status:401})
     }
     let contactList = await getContacts(token);
+    // console.log("The contact list to send ", contactList);
     
     if(contactList){
         return NextResponse.json({contactList});

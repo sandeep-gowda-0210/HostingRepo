@@ -2,6 +2,7 @@
 import { autoReplyType } from "@/app/api/chatservice/autoResponse/setAutoResponse/route";
 import { createClient } from '@supabase/supabase-js';
 import {groq_gen_auto_reply} from '@/utils/groqai';
+import { decrypt, encrypt } from "./chatService";
 export const setAutoReply = async (token: string, autoReplyData: autoReplyType) => {
     const supabaseWithToken = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -159,10 +160,13 @@ export const assert_generate_autoreply = async (token: String, from_user_id: str
         if(genAutoReplyError!==null && replyData!==null){
             return {data:null, genAutoReplyError};
         }
+        
+        if(replyData){
+        let { iv, encryptedData } = encrypt(replyData);
         // console.log(" AI replied ",replyData, " error ",genAutoReplyError);
         const {data:insertedData, error } = await supabaseWithToken
         .from('Message')
-        .insert({sender_id:to_user_id,receiver_id:from_user_id,content:replyData}).select('*')
+        .insert({sender_id:to_user_id,receiver_id:from_user_id,content:encryptedData, initial_vector:iv}).select('*')
         .single();
         // console.log("inserted auto reply ", insertedData, " error", error);
         
@@ -171,8 +175,11 @@ export const assert_generate_autoreply = async (token: String, from_user_id: str
             console.log("message Data inserted error", error);
             return {data:null ,error};
         }
-        return {data:insertedData,error:null};
+        console.log("sending ai reply");
+        
+        let decryptedData = decrypt(insertedData.content, insertedData.initial_vector)
+        return {data:decryptedData,error:null};
     }
-
-
+    return {data:null, error:"no reply data generated"};
+    }
 }

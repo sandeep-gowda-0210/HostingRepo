@@ -16,12 +16,12 @@ export type Message = {
   file_url: string;
   file: { name: string, type: string, data: string | ArrayBuffer };
   created_at: Date;
-  time_stamp: Date;
+  time_stamp: Date|string;
   file_name:string;
 };
 
 function ChatWindow() {
-  let { user, selectedUser } = useUserData();
+  let { user, selectedUser, triggerRefreshRecentChat } = useUserData();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -58,7 +58,6 @@ function ChatWindow() {
 
       const res = await fetch(`/api/chatservice/getMessages?${params.toString()}`);
       const data = await res.json();
-      console.log(data.messages[0].time_stamp);
       
       setMessages(data.messages);
     } catch (err) {
@@ -66,6 +65,8 @@ function ChatWindow() {
     }
     finally{
       setMessageLoading(false);
+      triggerRefreshRecentChat();
+
     }
   };
 
@@ -80,10 +81,16 @@ function ChatWindow() {
   }, [user]);
   useEffect(() => {
     socket.on('receive-message', (message: Message) => {
+      
+        triggerRefreshRecentChat();
       if (
         (message.sender_id === selectedUser?.user_id && message.receiver_id === currentUserId) ||
         (message.sender_id === currentUserId && message.receiver_id === selectedUser?.user_id)
       ) {
+      //   if(!message.time_stamp){
+          
+      // message.time_stamp= new Date(getLocalDateTimeString())
+      //   }
         setMessages((prev) => [...prev, message]);
       }
     });
@@ -106,13 +113,20 @@ function ChatWindow() {
     console.log((!newMessage.trim() && !selectedFile) || !selectedUser || !currentUserId, !selectedFile);
 
     if ((!newMessage.trim() && !selectedFile) || !selectedUser || !currentUserId) return;
+    function getLocalDateTimeString() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const localTime = new Date(now.getTime() - offset * 60 * 1000);
+      return localTime.toISOString().slice(0, 16);
+    }
 
+    
     let messagePayload: Partial<Message> = {
       sender_id: currentUserId,
       receiver_id: selectedUser.user_id,
       content: newMessage,
-      type: selectedFile ? selectedFile.type : "text"
-      // timestamp: new Date().toISOString()
+      type: selectedFile ? selectedFile.type : "text",
+      time_stamp: getLocalDateTimeString()
     };
 
     if (selectedFile) {
@@ -131,17 +145,20 @@ function ChatWindow() {
       };
     }
     console.log("sending message");
-
+    
     socket.emit('send-message', messagePayload);
-
+    
     // let messagePayload_1: Message = {
-    //   id: Math.random().toString(),
-    //   sender_id: currentUserId,
-    //   receiver_id: selectedUser.user_id,
-    //   content: newMessage,
-    // }
-    socket.on("sent-message", () => {
-      loadMessages();
+      //   id: Math.random().toString(),
+      //   sender_id: currentUserId,
+      //   receiver_id: selectedUser.user_id,
+      //   content: newMessage,
+      // }
+      socket.on("sent-message", () => {
+        loadMessages();
+        triggerRefreshRecentChat();
+      // triggerRefreshRecentChat();
+
     })
     // setMessages((prev) => [...prev, { ...messagePayload_1 }]);
     setNewMessage('');
@@ -236,15 +253,14 @@ function ChatWindow() {
                   }`}
               >{msg.type === 'text' ? (<>
                 <div>{msg.content}</div>
-                <div className="text-[10px] text-gray-400 mt-1">
+                <div className="text-[10px] text-gray-400 mt-1 text-right">
                   {new Date(msg.time_stamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </>
               ) : (
                 <>
-                  <div className="w-[300px] h-[200px] overflow-hidden rounded bg-black flex justify-center items-center flex-col">
-                    {/* Try previewing if possible */}
-                    <div className='w-[300px] h-[150px] overflow-hidden'>
+                  <div className="w-[300px] max-h-[200px] overflow-hidden rounded bg-black flex justify-center items-center flex-col">
+                    <div className='w-[300px] max-h-[150px] h-auto overflow-hidden'>
                       {msg.type.startsWith("image/") ? (
                         <img src={msg.file_url} alt={msg.file?.name} className="max-w-full max-h-60 rounded" />
                       ) : msg.type === "application/pdf" ? (
@@ -301,7 +317,7 @@ function ChatWindow() {
           />
 
             <button onClick={() => fileInputRef.current?.click()} className=' p-2 px-3 mx-2 rounded-lg hover:bg-[#2f2f2f] transition-all duration-300 ease-in-out cursor-pointer'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-paperclip-icon lucide-paperclip"><path d="M13.234 20.252 21 12.3" /><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-paperclip-icon lucide-paperclip"><path d="M13.234 20.252 21 12.3" /><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486" /></svg>
             </button>
 
           </div>

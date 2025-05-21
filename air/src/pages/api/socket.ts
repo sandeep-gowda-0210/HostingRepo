@@ -9,6 +9,7 @@ import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
 import { setSocketServer, setUserSocket,getUserSocketMap, removeUserSocket } from "@/utils/socketStore";
 import { assert_generate_autoreply, autoReplyOllama } from "@/services/autoReplyService";
+import { send } from "process";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {
@@ -58,6 +59,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
           if (!token)
             console.log("Token is not provided");
           if (token) {
+            socket.emit("sent-message");
             const error = await pushMessage(token, message);
             console.log("error: ",error);
             if (error!==null) {
@@ -65,21 +67,30 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
             }
             else {
               // console.log("entered");
-              socket.emit("sent-message");
+              // socket.emit("sent-message");
               let receiver_socket_id = getUserSocketMap().get(message.receiver_id)
               
               if (receiver_socket_id)
                 io.to(receiver_socket_id).emit("receive-message", message);
               if(message.type==="text"){
               const {data:reply,error:autoGenError} = await assert_generate_autoreply(token, message.sender_id,message.receiver_id,message.content);
+              console.log("After generation ",reply, autoGenError);
               if(autoGenError!==null && reply === null){
                 console.log("No reply generated", autoGenError);
               }
               if(reply!==null){
-                // console.log("Reply generated successfully", reply);
-                socket.emit("receive-message",reply);
-                if (receiver_socket_id)
-                  io.to(receiver_socket_id).emit("receive-message", reply);
+                message.content=reply;
+                let sender = message.sender_id;
+                let receiver = message.receiver_id;
+
+                message.receiver_id = sender;
+                message.sender_id = receiver;
+                console.log("Reply generated successfully", reply,receiver_socket_id );
+                socket.emit("receive-message",message);
+                if (receiver_socket_id){
+                  console.log("sending generator");
+                  
+                  io.to(receiver_socket_id).emit("receive-message", message);}
               }
               }
               // console.log(receiver_socket_id);

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getSocketServer, getUserSocketMap } from "@/utils/socketStore";
-import { base } from "framer-motion/m";
 export type scheduleMessageType={sender_id:string,receiver_id:string, message_content:string, send_time:Date};
 
 export const getContacts = async(token:string)=>{
@@ -23,13 +22,77 @@ export const getContacts = async(token:string)=>{
       return NextResponse.json({ error: 'Auth Error' }, { status: 401 });
     }
   
-    const { data: contactList, error: profileError } = await supabaseWithToken
-      .from('Profile')
-      .select('user_id,user_name,email_id,profile_url')
-      .neq('user_id', user.id);
+    if(user.id){
+    const { data: friendList, error: friendError } = await supabaseWithToken
+  .from('UserFriendList')
+  .select('sender_id, receiver_id, last_message_time')
+  .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+  .order('last_message_time', { ascending: false });
+      
+if (friendError && !friendList) {
+  console.error(friendError);
+} else {
+  const contactIds = friendList.map((f) =>
+    f.sender_id === user.id ? f.receiver_id : f.sender_id
+  );
+    const uniqueContactIds = [...new Set(contactIds)];
 
-    return contactList;
+
+  const { data: contactList1, error: profileError } = await supabaseWithToken
+    .from('Profile')
+    .select('user_id, user_name, email_id, profile_url')
+    .in('user_id', uniqueContactIds);
+
+  if (profileError) {
+    console.error(profileError);
+  } else {
+    const contactList = friendList.map(friend => {
+    const contactId = friend.sender_id === user.id ? friend.receiver_id : friend.sender_id;
+    const profile = contactList1.find(p => p.user_id === contactId);
+    return {
+      ...profile,
+      last_message_time: friend.last_message_time
+    };
+  });
+
+  const uniqueContacts = [];
+const seenUserIds = new Set();
+
+for (const contact of contactList) {
+  if (!seenUserIds.has(contact.user_id)) {
+    uniqueContacts.push(contact);
+    seenUserIds.add(contact.user_id);
   }
+}
+
+    return uniqueContacts;
+  }
+}
+
+  }
+}
+
+  
+export const getSearchedContacts = async(token:string,query:string)=>{
+    const supabaseWithToken = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        }
+      );
+    
+  const { data, error } = await supabaseWithToken
+    .from('Profile')
+    .select('user_id, user_name, email_id, profile_url')
+    .or(`user_name.ilike.%${query}%,email_id.ilike.%${query}%`).limit(10);
+
+    return {data, error};
+}
 
   
 export const pushMessage = async(token:string,messagePayload:Message)=>{
@@ -45,7 +108,7 @@ export const pushMessage = async(token:string,messagePayload:Message)=>{
       }
     );
 
-    // console.log("message inserting", messagePayload);
+    console.log("message inserting", messagePayload);
     if(messagePayload.file){
       const { name, type, data: base64Data } = messagePayload.file;
       if((typeof base64Data)==="string"){
@@ -73,20 +136,28 @@ export const pushMessage = async(token:string,messagePayload:Message)=>{
     }
     }
     
+    
     if(messagePayload.file){
+      let { iv, encryptedData } = encrypt(messagePayload.content);
+      // console.log("Pushing message", iv,"   ", encryptedData);
        const { error } = await supabaseWithToken
     .from('Message')
-    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:messagePayload.content,type:messagePayload.type, file_url:messagePayload.file_url||null, file_name:messagePayload.file?.name||null});
+    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:encryptedData,type:messagePayload.type, file_url:messagePayload.file_url||null, file_name:messagePayload.file?.name||null, initial_vector: iv});
     if(error)
     console.log("message Data inserted error", error);
   return error;
 }
 else{
+  console.log("The encryption is being done....");
+  
+    let { iv, encryptedData } = encrypt(messagePayload.content);
+    // console.log("Pushing message", iv,"   ", encryptedData);
   const { error } = await supabaseWithToken
     .from('Message')
-    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:messagePayload.content,type:messagePayload.type});
+    .insert({sender_id:messagePayload.sender_id,receiver_id:messagePayload.receiver_id,content:encryptedData,type:messagePayload.type,initial_vector:iv});
     if(error)
     console.log("message Data inserted error", error);
+    await setUserFriendList(token,messagePayload.sender_id,messagePayload.receiver_id);
   return error;
 }
   
@@ -107,13 +178,22 @@ export const fetchMessages = async(token:string, from_user_id: string, to_user_i
     );
 
     
-  const { data, error } = await supabaseWithToken
+  let { data, error } = await supabaseWithToken
     .from('Message')
     .select('*').or(
       `and(sender_id.eq.${from_user_id},receiver_id.eq.${to_user_id}),and(sender_id.eq.${to_user_id},receiver_id.eq.${from_user_id})`
-    );;
+    );
     // console.log("message Data inserted error", error);
-    
+    if(data){
+    data = data.map((element) => {
+          element["content"] = decrypt(
+            element["content"],
+            element["initial_vector"]
+          );
+          delete element["initial_vector"];
+          return element;
+        });
+      }
   return {data,error};
 }
 
@@ -173,12 +253,14 @@ export const sendScheduledMessage=async ()=>{
   for (const msg of messages) {
     const { sender_id, receiver_id, message_content, id } = msg;
 
+    let { iv, encryptedData } = encrypt(message_content);
     const { error: insertError } = await supabaseSuperClient
       .from('Message')
       .insert({
         sender_id,
         receiver_id,
-        content: message_content,
+        content: encryptedData,
+        initial_vector:iv
       });
 
     if (insertError) {
@@ -279,4 +361,83 @@ export const deleteScheduledMessage=async (token:string, message_id:string)=>{
     return {data:null, error};
   }
   return {data,error:null};
+}
+
+
+
+
+
+import crypto from "crypto";
+
+
+const algorithm = "aes-256-cbc";
+const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex"); // Encryption key (store securely)
+
+export function encrypt(text:string) {
+  
+  const iv = crypto.randomBytes(16); // Initialization vector
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+
+  console.log("Encrypting!!!!", iv.toString("hex"), encrypted);
+  
+  return { iv: iv.toString("hex"), encryptedData: encrypted };
+}
+
+export function decrypt(encryptedData:string, ivHex:string) {
+  console.log("decrypted ",ivHex,encryptedData);
+  
+  const decipher = crypto.createDecipheriv(
+    algorithm,
+    key,
+    Buffer.from(ivHex, "hex")
+  );
+  let decrypted = decipher.update(encryptedData, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  console.log("decrypted", decrypted);
+  
+  return decrypted;
+}
+
+
+
+
+
+export async function setUserFriendList(token:string,sender_id:string, receiver_id: string){
+const supabaseWithToken = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        }
+      );
+
+      
+      
+      const now = getLocalDateTimeString();
+      console.log("setting user list " ,sender_id,
+                  receiver_id,
+                  now);
+    const { error } = await supabaseWithToken
+            .from('UserFriendList')
+            .upsert([{
+                sender_id,
+                receiver_id,
+                last_message_time:now,
+            }], {
+                onConflict: 'sender_id,receiver_id'
+            });
+            if(error!==null){
+              console.log("error ", error);
+            }
+            else{
+              console.log("successfully inserted");
+              
+            }
+        return error;
 }

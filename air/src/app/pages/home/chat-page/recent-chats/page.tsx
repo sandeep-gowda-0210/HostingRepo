@@ -3,8 +3,8 @@ import type { Contact } from '../../layout';
 import { useUserData } from '../../layout';
 function RecentChats() {
   let [contacts, setContacts] = useState<Contact[] | null>(null);
-  let [loading, setLoading] = useState<Boolean>(true);
-  let {selectedUser, setSelectedUser } = useUserData();
+  let [recentLoading, setrecentLoading] = useState<Boolean>(true);
+  let {selectedUser, setSelectedUser,refreshRecentChatFlag } = useUserData();
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const fetchContacts = async () => {
@@ -13,10 +13,11 @@ function RecentChats() {
         method: "GET",
       });
       const { contactList } = await contactdata.json();
+      console.log("received contact list", contactList);
+      
       if (contactList) {
         {
           setContacts(contactList);
-          setLoading(false);
         }
       }
     }
@@ -24,17 +25,42 @@ function RecentChats() {
       console.error("Error fetching contacts:", error);
     }
     finally {
-      setLoading(false);
+      setrecentLoading(false);
     }
 
   }
   const handleContactClick = (contact: Contact) => {
-    console.log("Clicked on contact:", contact);
+    // console.log("Clicked on contact:", contact);
     setSelectedUser(contact);
   };
   useEffect(() => {
     fetchContacts();
-  },[]);
+  },[refreshRecentChatFlag]);
+
+  const handleSearch = async (searchTerm: string) => {
+  setSearchTerm(searchTerm);
+
+  if (searchTerm.trim() === "") {
+    fetchContacts(); 
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/chatservice/searchUser?query=${searchTerm}`, {
+      method: "GET",
+    });
+
+    const { users } = await res.json();
+
+    if (Array.isArray(users)) {
+      setContacts(users);
+    }
+  } catch (error) {
+    console.error("Search error:", error);
+  }
+};
+
+
   return (
     <div className="p-4 pt-0 pb-0 h-full box-border flex flex-col">
   
@@ -43,34 +69,41 @@ function RecentChats() {
       <div className="border rounded  pt-0  max-h-full h-full overflow-y-auto">
         <h2 className="text-lg font-semibold h-fit mt-6 text-center border-b-1 pb-5 w-full rounded-0">Recent Chats</h2>
         <div className='p-4 pt-0'>
-        <input
+        {/* <input
         type="text"
         placeholder="Search contacts..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className=" mb-4 p-1 border w-full border-gray-300 text-sm rounded focus:outline-none focus:ring focus:border-blue-300"
+      /> */}
+      <input
+        type="text"
+        placeholder="Search contacts..."
+        value={searchTerm}
+        onChange={(e) => handleSearch(e.target.value)}
+        className="mb-4 p-1 border w-full border-gray-300 text-sm rounded focus:outline-none focus:ring focus:border-blue-300"
       />
-        {loading ? (
-          <div>Loading...</div>
+        {recentLoading ? (
+          <div>recentLoading...</div>
         ) : contacts === null || contacts.length === 0 ? (
           <div>No contacts found.</div>
         ) : (
           <ul className="space-y-3">
-            {contacts
+            {contacts && contacts
               .filter((contact) =>
                 contact.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 contact.email_id.toLowerCase().includes(searchTerm.toLowerCase())
               )
-              .sort((a, b) =>
-                a.user_name.toLowerCase().localeCompare(b.user_name.toLowerCase())
-              )
+              // .sort((a, b) =>
+              //   a.user_name.toLowerCase().localeCompare(b.user_name.toLowerCase())
+              // )
               .map((contact) => (
                 <li
                   key={contact.user_id}
                   onClick={() => handleContactClick(contact)}
                   className={`flex items-center space-x-3 p-2 rounded hover:bg-gray-400 ${
                     selectedUser?.user_id === contact.user_id ? "bg-gray-200" : ""
-                  } transition-all hover:ease-in-out duration-300 cursor-pointer`}
+                  } transition-all hover:ease-in-out duration-300 cursor-pointer overflow-hidden`}
                 >
                   <img
                     src={contact.profile_url}

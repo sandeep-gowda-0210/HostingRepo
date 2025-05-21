@@ -1,6 +1,5 @@
 'use client'
 import React, { useState } from "react";
-import Navbar from "@/components/navbar/Navbar";
 import socket from "@/utils/socket";
 
 import { useEffect,createContext,useContext } from "react";
@@ -22,6 +21,9 @@ type UserContextType={
   refreshUser:() => Promise<void>,
   selectedUser: Contact|null,
   setSelectedUser:(selectedUser:Contact|null)=>void;
+  
+  refreshRecentChatFlag: Boolean;
+  triggerRefreshRecentChat: () => void;
 }
 export type Contact = {
   user_id: string;
@@ -35,7 +37,10 @@ const UserContext = createContext<UserContextType>({
   setUser:()=>{},
   refreshUser: async () => {},
   selectedUser:null,
-  setSelectedUser:async ()=>{}
+  setSelectedUser:async ()=>{},
+  
+  refreshRecentChatFlag: true,
+  triggerRefreshRecentChat: () => {},
 });
 
 
@@ -57,6 +62,10 @@ export default function Home({children}:{children: React.ReactNode}){
   const [user,setUser] = useState<User|null>(null);
   const [loading, setLoading] = useState<Boolean>(true);
   const [selectedUser,setSelectedUser] = useState<Contact|null>(null);
+  const [refreshRecentChatFlag, setRefreshRecentChatFlag] = useState<Boolean>(true);
+
+  const triggerRefreshRecentChat = () => setRefreshRecentChatFlag((prev) => !prev);
+
 
   useEffect(() => {
     let isMounted:Boolean = true;
@@ -105,7 +114,7 @@ useEffect(()=>{
   fetchData();
   },[])
 
-  return <UserContext.Provider value={{user,setUser,refreshUser:fetchData,setSelectedUser,selectedUser}}>
+  return <UserContext.Provider value={{user,setUser,refreshUser:fetchData,setSelectedUser,selectedUser,refreshRecentChatFlag, triggerRefreshRecentChat}}>
     {/* <Navbar/> */}
     {loading?<div className="flex w-full h-screen justify-center items-center text-6xl font-bold text-gray-400">Loading....</div>:<div className="max-h-[100vh]">
     {/* <div className="flex w-full justify-center h-[5rem] items-center text-2xl font-bold text-gray-400">
