@@ -92,6 +92,9 @@ function ChatWindow() {
       // message.time_stamp= new Date(getLocalDateTimeString())
       //   }
         setMessages((prev) => [...prev, message]);
+        
+        let users={sender_id:selectedUser.user_id,receiver_id:currentUserId}
+        socket.emit("notification-seen",users);
       }
     });
 
@@ -241,7 +244,7 @@ function ChatWindow() {
       !scheduleMessagePage && !autoReplyPage &&
       <>
         <div className="flex-1 p-4 py-3 overflow-y-auto space-y-2 bg-blend-darken">
-          {messageLoading ?<div className="text-gray-500 text-3xl flex h-full w-full justify-center items-center">Loading...</div>:messages.length === 0 ? (
+          {messageLoading ?<div className="text-gray-500 text-3xl flex h-full w-full justify-center items-center">Loading...</div>:messages && messages.length === 0 ? (
             <div className="text-gray-500 text-3xl flex h-full w-full justify-center items-center">No messages yet</div>
           ) : (
             messages.map((msg, index) => (

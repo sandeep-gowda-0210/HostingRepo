@@ -3,7 +3,7 @@ import { Server as IOServer } from "socket.io";
 import { Server as HTTPServer } from "http";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { parse } from "cookie";
-import { pushMessage } from "@/services/chatService";
+import { pushMessage, setUserFriendListNotification } from "@/services/chatService";
 
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
@@ -42,78 +42,116 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
 
 
   io.on("connection", async (socket) => {
-    const cookieHeader = socket.handshake.headers.cookie || "";
-    // console.log("heeeeeey ", cookieHeader);
-    const cookies = parse(cookieHeader);
-    const token = cookies['login-token'];
-    if (token) {
-      const { data, error } = await getUser(token);
-      if (data?.length) {
-        const { user_id } = data[0];
-        setUserSocket(user_id, socket.id);
-        console.log(`✅ User ${user_id} connected with socket ${socket.id}`);
-        console.log("🔌 New client connected:", socket.id);
-        socket.on("send-message", async (message: Message) => {
-          console.log(" client connected:", socket.id);
-          // console.log("📨 Message received:", message, " from ", socket.id);
-          if (!token)
-            console.log("Token is not provided");
-          if (token) {
-            socket.emit("sent-message");
-            const error = await pushMessage(token, message);
-            console.log("error: ",error);
-            if (error!==null) {
-              console.log("Error Occured pushing message", error);
-            }
-            else {
-              // console.log("entered");
-              // socket.emit("sent-message");
-              let receiver_socket_id = getUserSocketMap().get(message.receiver_id)
-              
-              if (receiver_socket_id)
-                io.to(receiver_socket_id).emit("receive-message", message);
-              if(message.type==="text"){
-              const {data:reply,error:autoGenError} = await assert_generate_autoreply(token, message.sender_id,message.receiver_id,message.content);
-              console.log("After generation ",reply, autoGenError);
-              if(autoGenError!==null && reply === null){
-                console.log("No reply generated", autoGenError);
-              }
-              if(reply!==null){
-                message.content=reply;
-                let sender = message.sender_id;
-                let receiver = message.receiver_id;
+  try {
+    const token = extractToken(socket);
+    if (!token) return logAuthError(socket.id);
 
-                message.receiver_id = sender;
-                message.sender_id = receiver;
-                console.log("Reply generated successfully", reply,receiver_socket_id );
-                socket.emit("receive-message",message);
-                if (receiver_socket_id){
-                  console.log("sending generator");
-                  
-                  io.to(receiver_socket_id).emit("receive-message", message);}
-              }
-              }
-              // console.log(receiver_socket_id);
-            }
-          }
-        });
+    const { data, error } = await getUser(token);
+    const user = data?.[0];
+    if (!user || error) return logUserError(error);
 
+    const userId = user.user_id;
+    setUserSocket(userId, socket.id);
 
-        socket.on("disconnect", () => {
-          if (user_id) {
-            removeUserSocket(user_id);
-            console.log(`❌ User ${user_id} disconnected`);
-          }
-          console.log("❌ Client disconnected:", socket.id);
-        });
-      } else if (error || !data) {
-        console.error("User profile not found ", error);
-      }
-    } else {
-      console.error("Auth error while fetching data");
-    }
-  });
+    console.log(`✅ User ${userId} connected with socket ${socket.id}`);
+    console.log("🔌 New client connected:", socket.id);
+
+    socket.on("send-message", async (message: Message) => {
+      await handleSendMessage(socket, token, message);
+    });
+
+    socket.on("notification-seen",async(users)=>{
+      console.log("entered notification seen");
+      let output = await setUserFriendListNotification(token,users.sender_id,users.receiver_id);
+      console.log(output );
+      socket.emit("refresh-recents");
+    })
+
+    socket.on("disconnect", () => {
+      removeUserSocket(userId);
+      console.log(`❌ User ${userId} disconnected`);
+      console.log("❌ Client disconnected:", socket.id);
+    });
+  } catch (err) {
+    console.error("🔥 Socket connection error:", err);
+  }
+});
   res.socket.server.io = io;
   setSocketServer(res.socket.server.io);
   res.end();
+
+
+
+
+
+  function extractToken(socket: any): string | null {
+  const cookieHeader = socket.handshake.headers.cookie || "";
+  const cookies = parse(cookieHeader);
+  return cookies["login-token"] || null;
 }
+
+
+async function handleSendMessage(socket: any, token: string, message: Message) {
+  console.log("📨 Message received from:", socket.id);
+  
+  const pushErr = await pushMessage(token, message);
+  socket.emit("sent-message");
+  
+  if (pushErr) {
+    return console.error("❌ Error pushing message:", pushErr);
+  }
+  
+  const receiverSocketId = getUserSocketMap().get(message.receiver_id);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("receive-message", message);
+  }
+  
+  if (message.type === "text") {
+    await handleAutoReply(socket, token, message, receiverSocketId);
+  }
+}
+
+async function handleAutoReply(
+  socket: any,
+  token: string,
+  originalMessage: Message,
+  receiverSocketId?: string
+) {
+  const { data: reply, error } = await assert_generate_autoreply(
+    token,
+    originalMessage.sender_id,
+    originalMessage.receiver_id,
+    originalMessage.content
+  );
+  
+  if (error || !reply) {
+    return console.warn("🤖 Auto-reply not generated:", error);
+  }
+  
+  const replyMessage: Message = {
+    ...originalMessage,
+    content: reply,
+    sender_id: originalMessage.receiver_id,
+    receiver_id: originalMessage.sender_id,
+  };
+  
+  socket.emit("receive-message", replyMessage);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("receive-message", replyMessage);
+    console.log("📤 Auto-reply sent to:", receiverSocketId);
+  }
+}
+
+
+
+
+function logAuthError(socketId: string) {
+  console.error(`🚫 Authentication failed for socket: ${socketId}`);
+}
+
+function logUserError(error: any) {
+  console.error("❌ User profile not found or DB error:", error);
+}
+}
+
+

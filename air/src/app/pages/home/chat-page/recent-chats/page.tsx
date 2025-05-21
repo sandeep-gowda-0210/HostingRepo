@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useContext } from 'react'
 import type { Contact } from '../../layout';
 import { useUserData } from '../../layout';
+import socket from '@/utils/socket';
+
 function RecentChats() {
   let [contacts, setContacts] = useState<Contact[] | null>(null);
   let [recentLoading, setrecentLoading] = useState<Boolean>(true);
-  let {selectedUser, setSelectedUser,refreshRecentChatFlag } = useUserData();
+  let {selectedUser, setSelectedUser,refreshRecentChatFlag, user,triggerRefreshRecentChat} = useUserData();
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const fetchContacts = async () => {
@@ -32,9 +34,19 @@ function RecentChats() {
   const handleContactClick = (contact: Contact) => {
     // console.log("Clicked on contact:", contact);
     setSelectedUser(contact);
+    if(user?.user_id){
+    let users={sender_id:contact.user_id,receiver_id:user.user_id}
+    socket.emit("notification-seen",users);
+    }
   };
   useEffect(() => {
+    socket.on("refresh-recents",async()=>{
+      await triggerRefreshRecentChat()
+    })
     fetchContacts();
+    return ()=>{
+      socket.off("refresh-recents")
+    }
   },[refreshRecentChatFlag]);
 
   const handleSearch = async (searchTerm: string) => {
@@ -101,9 +113,11 @@ function RecentChats() {
                 <li
                   key={contact.user_id}
                   onClick={() => handleContactClick(contact)}
-                  className={`flex items-center space-x-3 p-2 rounded hover:bg-gray-400 ${
+                  className={`flex items-center justify-between pr-5 space-x-3 p-2 rounded hover:bg-gray-400 ${
                     selectedUser?.user_id === contact.user_id ? "bg-gray-200" : ""
-                  } transition-all hover:ease-in-out duration-300 cursor-pointer overflow-hidden`}
+                  } transition-all hover:ease-in-out duration-300 cursor-pointer overflow-hidden `}
+                >
+                  <div className={`flex items-center space-x-3 p-2 rounded overflow-hidden `}
                 >
                   <img
                     src={contact.profile_url}
@@ -114,6 +128,8 @@ function RecentChats() {
                     <div className="text-sm font-medium">{contact.user_name}</div>
                     <div className="text-xs text-gray-500">{contact.email_id}</div>
                   </div>
+                  </div>
+                    {contact.notification_status?<div className='h-3 w-3 rounded-full bg-green-400 border-gray-600 border-2'></div>:null}
                 </li>
               ))}
           </ul>

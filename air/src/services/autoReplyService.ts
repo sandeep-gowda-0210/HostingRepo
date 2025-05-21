@@ -2,19 +2,11 @@
 import { autoReplyType } from "@/app/api/chatservice/autoResponse/setAutoResponse/route";
 import { createClient } from '@supabase/supabase-js';
 import {groq_gen_auto_reply} from '@/utils/groqai';
-import { decrypt, encrypt } from "./chatService";
+import { decrypt, encrypt, setUserFriendList } from "./chatService";
+import { createSupabaseWithToken } from "@/utils/socket";
 export const setAutoReply = async (token: string, autoReplyData: autoReplyType) => {
-    const supabaseWithToken = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        }
-    );
+      const supabaseWithToken = await createSupabaseWithToken(token);
+    
 
     if (autoReplyData.autoReplyEnabled) {
         const { error } = await supabaseWithToken
@@ -42,18 +34,9 @@ export const setAutoReply = async (token: string, autoReplyData: autoReplyType) 
 
 
 
-export const getAutoReply = async (token: String, from_user_id: string, to_user_id: string): Promise<GetAutoReplyResponse>  => {
-    const supabaseWithToken = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        }
-    );
+export const getAutoReply = async (token: string, from_user_id: string, to_user_id: string): Promise<GetAutoReplyResponse>  => {
+      const supabaseWithToken = await createSupabaseWithToken(token);
+
     const { data, error } = await supabaseWithToken.from("AutoReply").select("history_period").match({
         sender_id: from_user_id,
         receiver_id: to_user_id
@@ -77,18 +60,9 @@ export function getHistoryLocalDateTimeString(historyDays:number) {
     return localTime.toISOString().slice(0, 16);
   }
 
-export const autoReplyOllama = async (token: String, from_user_id: string, to_user_id: string,) => {
-    const supabaseWithToken = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        }
-    );
+export const autoReplyOllama = async (token: string, from_user_id: string, to_user_id: string,) => {
+      const supabaseWithToken = await createSupabaseWithToken(token);
+
     const { data, error } = await supabaseWithToken.from("AutoReply").select("history_period").match({
         sender_id: to_user_id,
         receiver_id: from_user_id
@@ -113,7 +87,7 @@ export const autoReplyOllama = async (token: String, from_user_id: string, to_us
 
 
 
-export const generate_auto_reply = async (token: String, from_user_id: string, to_user_id: string, message: string) => {
+export const generate_auto_reply = async (token: string, from_user_id: string, to_user_id: string, message: string) => {
     const { data:summary, error:affirmationError }= await autoReplyOllama(token, from_user_id, to_user_id)
     if(affirmationError!==null)
         return {data:null , affirmationError};
@@ -134,20 +108,10 @@ interface GetAutoReplyResponse {
     error: Error | null;
 }
 
-export const assert_generate_autoreply = async (token: String, from_user_id: string, to_user_id: string, message: string) => {
-    const supabaseWithToken = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        }
-    );
+export const assert_generate_autoreply = async (token: string, from_user_id: string, to_user_id: string, message: string) => {
+      const supabaseWithToken = await createSupabaseWithToken(token);
+
     const { data, error }= await getAutoReply(token,to_user_id,from_user_id);
-    // console.log("data, ", data, "error, ",error);
     
     if(
         error !== null ||
@@ -171,10 +135,11 @@ export const assert_generate_autoreply = async (token: String, from_user_id: str
         // console.log("inserted auto reply ", insertedData, " error", error);
         
         if(error!==null)
-        {
-            console.log("message Data inserted error", error);
-            return {data:null ,error};
-        }
+            {
+                console.log("message Data inserted error", error);
+                return {data:null ,error};
+            }
+        await setUserFriendList(token,to_user_id,from_user_id)
         console.log("sending ai reply");
         
         let decryptedData = decrypt(insertedData.content, insertedData.initial_vector)

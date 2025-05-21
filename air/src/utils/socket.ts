@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3000",{
@@ -7,3 +8,18 @@ const socket = io("http://localhost:3000",{
 });
 
 export default socket;
+
+
+export const createSupabaseWithToken = async(token:string)=>{
+  return await createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        }
+      );
+    }

@@ -30,6 +30,7 @@ export type Contact = {
   user_name: string;
   email_id: string;
   profile_url: string;
+  notification_status:Boolean;
 };
 
 const UserContext = createContext<UserContextType>({
