@@ -2,10 +2,17 @@ import React, { useEffect, useState, useContext } from 'react'
 import type { Contact } from '../../layout';
 import { useUserData } from '../../layout';
 import socket from '@/utils/socket';
+export const playNotificationSound = () => {
+  const notificationSound = new Audio("/resources/tap-notification.mp3");
+  notificationSound.play().catch(err => {
+    console.error("Audio play failed:", err);
+  });
+};
 
 function RecentChats() {
   let [contacts, setContacts] = useState<Contact[] | null>(null);
   let [recentLoading, setrecentLoading] = useState<Boolean>(true);
+  let [activeUsers, setActiveUsers] = useState<string[]>([]);
   let {selectedUser, setSelectedUser,refreshRecentChatFlag, user,triggerRefreshRecentChat} = useUserData();
   const [searchTerm, setSearchTerm] = useState<string>("");
 
@@ -33,19 +40,26 @@ function RecentChats() {
   }
   const handleContactClick = (contact: Contact) => {
     // console.log("Clicked on contact:", contact);
+    
     setSelectedUser(contact);
+    socket.emit("refreshActiveUsers");
     if(user?.user_id){
     let users={sender_id:contact.user_id,receiver_id:user.user_id}
     socket.emit("notification-seen",users);
     }
   };
   useEffect(() => {
+    socket.on("activeUsers",async(activeUserIds)=>{
+      console.log("Active users",(activeUserIds));
+      setActiveUsers(activeUserIds);
+    })
     socket.on("refresh-recents",async()=>{
       await triggerRefreshRecentChat()
     })
     fetchContacts();
     return ()=>{
-      socket.off("refresh-recents")
+      socket.off("refresh-recents");
+      socket.off("activeUsers");
     }
   },[refreshRecentChatFlag]);
 
@@ -113,23 +127,22 @@ function RecentChats() {
                 <li
                   key={contact.user_id}
                   onClick={() => handleContactClick(contact)}
-                  className={`flex items-center justify-between pr-5 space-x-3 p-2 rounded hover:bg-gray-400 ${
-                    selectedUser?.user_id === contact.user_id ? "bg-gray-200" : ""
-                  } transition-all hover:ease-in-out duration-300 cursor-pointer overflow-hidden `}
+                  className={`flex items-center justify-between pr-5 space-x-3 p-2 rounded hover:bg-gray-400  transition-all ${contact.user_id === user?.user_id ? selectedUser?.user_id === contact.user_id ? "bg-gray-200":"bg-[#2c2a45]":null} ${selectedUser?.user_id === contact.user_id ? "bg-gray-200":""} hover:ease-in-out duration-300 cursor-pointer overflow-hidden `}
                 >
                   <div className={`flex items-center space-x-3 p-2 rounded overflow-hidden `}
                 >
                   <img
                     src={contact.profile_url}
                     alt={`${contact.user_name}'s profile`}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className={`w-10 h-10 rounded-full object-cover ${(activeUsers.includes(contact.user_id)) ? "border-3 border-green-400":null}`}
                   />
-                  <div>
-                    <div className="text-sm font-medium">{contact.user_name}</div>
-                    <div className="text-xs text-gray-500">{contact.email_id}</div>
+                  <div>{
+                    contact.user_id !== user?.user_id?<><div className="text-sm font-medium">{contact.user_name}</div>
+                    <div className="text-xs text-gray-500">{contact.email_id}</div></>:<><div className="text-sm font-medium">Myself</div><div className="text-xs text-gray-500">{contact.user_name}</div></>
+                    }
                   </div>
                   </div>
-                    {contact.notification_status?<div className='h-3 w-3 rounded-full bg-green-400 border-gray-600 border-2'></div>:null}
+                    {contact.notification_status?<div className='h-3 w-3 rounded-full bg-red-400 border-gray-600 border-2'></div>:null}
                 </li>
               ))}
           </ul>

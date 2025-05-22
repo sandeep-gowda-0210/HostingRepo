@@ -55,11 +55,16 @@ export const getContacts = async (token: string) => {
         const contactId = friend.sender_id === user.id ? friend.receiver_id : friend.sender_id;
         const profile = contactProfiles.find(p => p.user_id === contactId);
 
+        
+      const notificationStatus = friend.sender_id === user.id
+        ? false  // override to false when user sent the message
+        : friend.notification_status;
+
         return profile
           ? {
             ...profile,
             last_message_time: friend.last_message_time,
-            notification_status:friend.notification_status,
+            notification_status:notificationStatus,
           }
           : null;
       });

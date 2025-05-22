@@ -18,10 +18,10 @@ export default function AutoReplySettings() {
       console.log("hdfdk", data);
       
       try{
-      if(data.error!==undefined){
-        console.log("1");
-        
-     setStatus(`error ${data.error}`);
+      if(data.error!==undefined){  
+        console.log("error");
+              
+        setStatus(`error ${data.error}`);
       }
       if(data.history_period !==undefined ){
         console.log("2");
