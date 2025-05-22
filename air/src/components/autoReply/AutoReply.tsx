@@ -15,10 +15,10 @@ export default function AutoReplySettings() {
     const fetchAutoReplyData = async()=>{
       const res = await fetch(`/api/chatservice/autoResponse/getAutoResponse?from_user_id=${user?.user_id}&to_user_id=${selectedUser?.user_id}`)
       const data = (await res.json()).data;
-      console.log("hdfdk", data);
+      // console.log("d", data);
       
       try{
-      if(data.error!==undefined){  
+      if(data!==undefined && data.error!==undefined){  
         console.log("error");
               
         setStatus(`error ${data.error}`);

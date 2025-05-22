@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react'
 import type { Contact } from '../../layout';
 import { useUserData } from '../../layout';
 import socket from '@/utils/socket';
+import { CircularLoader } from '@/components/loader/Loader';
 export const playNotificationSound = () => {
   const notificationSound = new Audio("/resources/tap-notification.mp3");
   notificationSound.play().catch(err => {
@@ -110,7 +111,7 @@ function RecentChats() {
         className="mb-4 p-1 border w-full border-gray-300 text-sm rounded focus:outline-none focus:ring focus:border-blue-300"
       />
         {recentLoading ? (
-          <div>recentLoading...</div>
+          <div className='h-full w-full pt-30 flex justify-center items-center'><CircularLoader/></div>
         ) : contacts === null || contacts.length === 0 ? (
           <div>No contacts found.</div>
         ) : (
