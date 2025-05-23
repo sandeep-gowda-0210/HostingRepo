@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     
     const { searchParams } = new URL(req.url);
     const receiver_id = searchParams.get('query');
-    console.log("receiver id", receiver_id);
+    // console.log("receiver id", receiver_id);
     
   if (typeof receiver_id !== 'string') {
     return NextResponse.json({ message: "Invalid query" },{status:400});
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   if (error || !data) {
     return NextResponse.json({ message: "User not found" },{status:404});
   }
-  console.log("The data is ", data);
+  // console.log("The data is ", data);
   
   return NextResponse.json({users: data},{status:200});
 }

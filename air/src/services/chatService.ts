@@ -344,7 +344,7 @@ export function encrypt(text: string) {
   let encrypted = cipher.update(text, "utf8", "hex");
   encrypted += cipher.final("hex");
 
-  console.log("Encrypting!!!!", iv.toString("hex"), encrypted);
+  // console.log("Encrypting!!!!", iv.toString("hex"), encrypted);
 
   return { iv: iv.toString("hex"), encryptedData: encrypted };
 }
@@ -388,7 +388,7 @@ export async function setUserFriendList(token: string, sender_id: string, receiv
     console.log("error ", error);
   }
   else {
-    console.log("successfully inserted");
+    // console.log("successfully inserted");
 
   }
   return error;
@@ -396,7 +396,7 @@ export async function setUserFriendList(token: string, sender_id: string, receiv
 
 
 export async function setUserFriendListNotification(token: string, sender_id: string, receiver_id: string) {
-  console.log("enteredddd", sender_id, receiver_id);
+  // console.log("enteredddd", sender_id, receiver_id);
   const supabaseWithToken = await createSupabaseWithToken(token);
 
   const { error } = await supabaseWithToken
@@ -413,7 +413,7 @@ export async function setUserFriendListNotification(token: string, sender_id: st
     console.log("successfully updated!!");
 
   }
-  console.log("enterreed");
+  // console.log("enterreed");
   
   return error;
 }
