@@ -1,49 +1,17 @@
-// 'use client'
-// import { useEffect, useState } from "react";
-// import { useUserData } from "../layout"
+// app/dashboard/page.tsx
+"use client"
+import { useUserData } from '../layout';
+import FileExplorer from './components/FileExplorer';
 
-// export default function Document(){
-//     let {user} = useUserData();
-//     return <div className="flex h-full w-full justify-center text-5xl text-blue-300 font-extralight">
-//         Document Storage Page.
-//     </div>
-// }
-
-
-
-
-// // let [email, setEmail] = useState<string|null>(null);
-// // useEffect(()=>{
-// //     const savedUser:{email?:string} = JSON.parse(localStorage.getItem('user') || '{}');
-// //     if (savedUser["email"]) {
-// //       setEmail(savedUser["email"]);
-// //     }
-// // },[])
-
-'use client';
-
-import React from 'react';
-import { useDocuments } from './hooks/useSupabaseDocClient';
-import { DocumentList } from './components/DocumentList';
-import { UploadFile } from './components/DocumentUpload';
-
-export default function DocumentsPage() {
-  const { documents, loading, error, upload, rename, remove } = useDocuments();
+export default function DashboardPage() {
+  const {user} = useUserData();
+  const userId = user?.user_id || null;
 
   return (
-    <div className="p-4">
-      <h1>Document Storage</h1>
-
-      <UploadFile onUpload={upload} />
-
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <DocumentList
-        documents={documents}
-        onRename={rename}
-        onDelete={remove}
-      />
-    </div>
+    userId && 
+    <main className="h-full bg-black text-white p-6">
+      <h1 className="text-2xl font-bold mb-4">Document Manager</h1>
+      <FileExplorer userId={userId} />
+    </main>
   );
 }

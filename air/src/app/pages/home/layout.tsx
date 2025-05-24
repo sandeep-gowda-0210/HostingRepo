@@ -96,8 +96,7 @@ export default function Home({children}:{children: React.ReactNode}){
     try{
     const userData = await fetch('/api/userauth/getuser',{
       method:'GET',
-      headers:{'Content-Type':'application/json'},
-      cache:'no-store',
+      headers:{'Content-Type':'application/json'}
     })
     const {profile_data:userdata} =await userData.json();
     if(userdata){{
