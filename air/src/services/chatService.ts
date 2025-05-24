@@ -99,12 +99,15 @@ export const getSearchedContacts = async (token: string, query: string) => {
 }
 
 
-export const pushMessage = async (token: string, messagePayload: Message) => {
+export const pushMessage = async (token: string, messagePayload: Partial<Message>) => {
   const supabaseWithToken = await createSupabaseWithToken(token);
 let fileUrl: string | null = null;
   let fileName: string | null = null;
+console.log("Entered push message", messagePayload.file, typeof messagePayload.file?.data);
 
   if (messagePayload.file && typeof messagePayload.file.data === "string") {
+    console.log("entered");
+    
     const { name, type, data: base64Data } = messagePayload.file;
     const base64 = base64Data.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
@@ -130,7 +133,7 @@ let fileUrl: string | null = null;
     return;
   }
 
-  const { iv, encryptedData } = encrypt(messagePayload.content);
+  const { iv, encryptedData } = encrypt(messagePayload.content||'');
 
   const { error: insertError } = await supabaseWithToken
     .from("Message")
@@ -149,6 +152,7 @@ let fileUrl: string | null = null;
     return insertError;
   }
 
+  if(messagePayload.sender_id && messagePayload.receiver_id)
   await setUserFriendList(token, messagePayload.sender_id, messagePayload.receiver_id);
   return null;
 

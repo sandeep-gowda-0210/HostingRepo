@@ -6,7 +6,8 @@ import UploadModal from "./UploadModal";
 import DeleteButton from "./DeleteButton";
 import PreviewButton from "./PreviewButton";
 
-import { FiFolder, FiFile, FiMoreVertical, FiArrowLeft } from "react-icons/fi";
+import { FiFolder, FiFile, FiMoreVertical, FiArrowLeft, FiShare2, FiSend } from "react-icons/fi";
+import ChatDialogue from "./ChatDialogue";
 
 interface FileItem {
   id: string;
@@ -25,23 +26,35 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
   const [loading, setLoading] = useState(false);
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
-
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-
-  // Track navigation history to implement "Back"
   const [navigationStack, setNavigationStack] = useState<(string | null)[]>([]);
-
-  // Refs for outside click detection
   const menuRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareItemId, setShareItemId] = useState<string | null>(null);
 
-  // Fetch files/folders inside the currentParentId folder
+
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [fileToSend, setFileToSend] = useState<FileItem | null>(null);
+
+  const handleSendFile = (file: FileItem) => {
+    setFileToSend(file);
+    setIsChatOpen(true);
+  };
+
+
   const fetchItems = async () => {
     setLoading(true);
     try {
       const data = await listFiles(userId, currentParentId ?? undefined);
-      if (data.data) setItems(data.data);
+      if (data.data) {
+        const sortedItems = [...data.data].sort((a, b) => {
+          if (a.type === b.type) return 0;
+          return a.type === "folder" ? -1 : 1;
+        });
+        setItems(sortedItems);
+      }
     } catch (error) {
       console.error("Failed to fetch files/folders", error);
     } finally {
@@ -53,7 +66,6 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
     fetchItems();
   }, [currentParentId]);
 
-  // Close menu if clicked outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -66,7 +78,6 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
         setMenuOpenFor(null);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -95,13 +106,11 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
     }
   };
 
-  // Handle navigation into folder (push currentParentId to stack)
   const openFolder = (folderId: string) => {
     setNavigationStack((prev) => [...prev, currentParentId]);
     setCurrentParentId(folderId);
   };
 
-  // Handle Back button click (pop last from stack)
   const goBack = () => {
     setNavigationStack((prev) => {
       if (prev.length === 0) return prev;
@@ -112,33 +121,33 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
     });
   };
 
+  const openShareDialog = (itemId: string) => {
+    setShareItemId(itemId);
+    setShareDialogOpen(true);
+    setMenuOpenFor(null);
+  };
+
+  const closeShareDialog = () => {
+    setShareDialogOpen(false);
+    setShareItemId(null);
+  };
+
   return (
-    <div className="bg-gray-900 h-full max-h-[90%]  p-6 text-gray-200 overflow-y-scroll">
+    <div className="bg-gray-900 h-full max-h-[90%] p-6 text-gray-200 overflow-y-auto">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           {navigationStack.length > 0 && (
             <button
               onClick={goBack}
               className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-gray-200"
-              aria-label="Go back to parent folder"
             >
-              <FiArrowLeft size={18} />
-              Back
+              <FiArrowLeft size={18} /> Back
             </button>
           )}
         </div>
-
         <div className="flex gap-10">
-          <CreateFolderButton
-            currentParentId={currentParentId}
-            userId={userId}
-            onFolderCreated={fetchItems}
-          />
-          <UploadModal
-            parentId={currentParentId}
-            userId={userId}
-            onUploadSuccess={fetchItems}
-          />
+          <CreateFolderButton currentParentId={currentParentId} userId={userId} onFolderCreated={fetchItems} />
+          <UploadModal parentId={currentParentId} userId={userId} onUploadSuccess={fetchItems} />
         </div>
       </div>
 
@@ -165,7 +174,6 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                   ) : (
                     <FiFile className="text-gray-400" size={20} />
                   )}
-
                   {isRenaming ? (
                     <input
                       type="text"
@@ -186,56 +194,33 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                 <div className="flex items-center gap-2 ml-5">
                   {isRenaming ? (
                     <>
-                      <button
-                        onClick={saveRename}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded cursor-pointer"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={cancelRename}
-                        className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-4 py-1 rounded cursor-pointer"
-                      >
-                        Cancel
-                      </button>
+                      <button onClick={saveRename} className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded cursor-pointer">Save</button>
+                      <button onClick={cancelRename} className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-4 py-1 rounded cursor-pointer">Cancel</button>
                     </>
                   ) : (
                     <>
-                      {item.type === "file" && (
-                        <PreviewButton fileId={item.id} userId={userId} />
-                      )}
+
+                      {!isMenuOpen && item.type === "file" && <PreviewButton fileId={item.id} userId={userId} />}
+
+                      {!isMenuOpen && item.type === "file" &&
+                        <button
+                          onClick={() => handleSendFile(item)}
+                          className="p-2 hover:bg-gray-700 rounded cursor-pointer"
+                        >
+                          <FiSend className="text-gray-300" size={18} />
+                        </button>}
 
                       <button
                         ref={isMenuOpen ? buttonRef : null}
-                        onClick={() =>
-                          setMenuOpenFor(isMenuOpen ? null : item.id)
-                        }
+                        onClick={() => setMenuOpenFor(isMenuOpen ? null : item.id)}
                         className="p-2 hover:bg-gray-700 rounded cursor-pointer"
-                        aria-label="Open menu"
                       >
                         <FiMoreVertical className="text-gray-300" size={18} />
                       </button>
-
                       {isMenuOpen && (
-                        <div
-                          ref={menuRef}
-                          className="absolute right-0 mt-10 w-36 bg-gray-800 border border-gray-700 rounded shadow-lg z-20"
-                        >
-                          <button
-                            className="w-full text-left px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                            onClick={() => startRename(item)}
-                          >
-                            Rename
-                          </button>
-
-                          <DeleteButton
-                            itemId={item.id}
-                            userId={userId}
-                            onDeleteSuccess={() => {
-                              fetchItems();
-                              setMenuOpenFor(null);
-                            }}
-                          />
+                        <div ref={menuRef} className="absolute right-0 mt-10 w-36 bg-gray-800 border border-gray-700 rounded shadow-lg z-20">
+                          <button className="w-full text-left px-4 py-2 hover:bg-gray-900 cursor-pointer rounded" onClick={() => startRename(item)}>Rename</button>
+                          <DeleteButton itemId={item.id} userId={userId} onDeleteSuccess={() => { fetchItems(); setMenuOpenFor(null); }} />
                         </div>
                       )}
                     </>
@@ -246,7 +231,19 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
           })}
         </div>
       )}
-
+      {isChatOpen && fileToSend && (
+        <ChatDialogue
+          isOpen={isChatOpen}
+          onClose={() => {
+            setIsChatOpen(false);
+            setFileToSend(null);
+          }}
+          onUserSelect={() => {
+            // You can handle post-send state updates here if needed
+          }}
+          fileToSend={fileToSend.id} // or however you reconstruct the File object
+        />
+      )}
     </div>
   );
 }

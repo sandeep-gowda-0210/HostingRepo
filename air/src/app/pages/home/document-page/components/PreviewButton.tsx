@@ -11,5 +11,5 @@ export default function PreviewButton({ fileId, userId }: any) {
     }
   };
 
-  return <button className="w-full text-left px-4 py-2 hover:bg-gray-950 bg-gray-900 rounded-lg cursor-pointer" onClick={handlePreview}>Preview</button>;
+  return <button className="w-full text-left px-4 py-1 hover:bg-gray-950 bg-gray-900 rounded-lg cursor-pointer" onClick={handlePreview}>Preview</button>;
 }

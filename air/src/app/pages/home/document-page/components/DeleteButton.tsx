@@ -13,5 +13,5 @@ export default function DeleteButton({ itemId, userId, onDeleteSuccess }: any) {
     }
   };
 
-  return <button className="w-full text-left px-4 py-2 hover:bg-gray-700 cursor-pointer" onClick={handleDelete}>Delete</button>;
+  return <button className="w-full text-left px-4 py-2 rounded hover:bg-gray-900 cursor-pointer" onClick={handleDelete}>Delete</button>;
 }
