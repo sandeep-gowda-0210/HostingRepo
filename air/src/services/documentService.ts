@@ -305,13 +305,13 @@ export const shareFiles = async (id: string, user_id: string, receiver_id: strin
           data: fileBlob, // Or convert to base64 if needed
         },
       };
-      let pushedError = await pushMessage(token, messagePayload)
+      let {data:pushedData,error:pushedError} = await pushMessage(token, messagePayload)
       if(pushedError){
         console.log("error ",pushedError);
-        return {data,error:null}
+        return {data:pushedData,error:null}
       }
 
-      return { data:"successfully sent", error: null };
+      return { data:pushedData, error: null };
     }
   } catch (err) {
     console.error(err);

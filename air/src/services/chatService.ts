@@ -117,7 +117,7 @@ export const pushMessage = async (token: string, messagePayload: Partial<Message
 
     if (uploadError) {
       console.error("Supabase upload error:", uploadError.message);
-      return uploadError;
+      return {data:null,error:uploadError};
     }
 
     const { data: publicUrlData } = await supabaseWithToken.storage
@@ -128,12 +128,12 @@ export const pushMessage = async (token: string, messagePayload: Partial<Message
     fileName = name;
   } else if (messagePayload.file) {
     console.error("Expected file data as base64 string, but got:", typeof messagePayload.file.data);
-    return;
+    return {data:null, error:null};
   }
 
   const { iv, encryptedData } = encrypt(messagePayload.content || '');
 
-  const { error: insertError } = await supabaseWithToken
+  const {data:insertedData, error: insertError } = await supabaseWithToken
     .from("Message")
     .insert({
       sender_id: messagePayload.sender_id,
@@ -143,16 +143,16 @@ export const pushMessage = async (token: string, messagePayload: Partial<Message
       initial_vector: iv,
       file_url: fileUrl,
       file_name: fileName,
-    });
+    }).select().single();
 
   if (insertError) {
     console.error("Message insert error:", insertError.message);
-    return insertError;
+    return {data:null,error:insertError};
   }
 
   if (messagePayload.sender_id && messagePayload.receiver_id)
     await setUserFriendList(token, messagePayload.sender_id, messagePayload.receiver_id);
-  return null;
+  return {data:insertedData,error:null};
 
 }
 

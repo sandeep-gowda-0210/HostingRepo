@@ -1,3 +1,4 @@
+'use client'
 import socket from "@/utils/socket";
 
 export async function frontendUploadFile(
@@ -112,25 +113,29 @@ export async function frontendCreateFolder(
 
 
 export async function shareDocuments(id: string, userId: string, receiverId:string){
+  console.log("sharing.....",socket.id);
   
-  // socket.emit("document-share",{})
-  const res = await fetch(`/api/documentservice/share-docs`,{
-    method: 'POST',
-      body: JSON.stringify({ id, user_id:userId, receiver_id:receiverId }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-  });
-  console.log("result",res);
+  const data = { id, user_id:userId, receiver_id:receiverId }
+  socket.emit("document-share",data);
+  console.log("shared....");
   
-  if (!res.ok) throw new Error("Failed to preview file");
+  // const res = await fetch(`/api/documentservice/share-docs`,{
+  //   method: 'POST',
+  //     body: JSON.stringify({ id, user_id:userId, receiver_id:receiverId }),
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  // });
+  // console.log("result",res);
+  
+  // if (!res.ok) throw new Error("Failed to preview file");
 
-  const contentType = res.headers.get("Content-Type");
-  if (contentType?.startsWith("application/json")) {
-    return await res.json();
-  } else {
-    console.log("result ",res);
+  // const contentType = res.headers.get("Content-Type");
+  // if (contentType?.startsWith("application/json")) {
+  //   return await res.json();
+  // } else {
+  //   console.log("result ",res);
     
-    return res;
-  }
+  //   return res;
+  // }
 }

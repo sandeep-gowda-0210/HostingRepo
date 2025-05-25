@@ -9,6 +9,7 @@ import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
 import { setSocketServer, setUserSocket, getUserSocketMap, removeUserSocket } from "@/utils/socketStore";
 import { assert_generate_autoreply, autoReplyOllama } from "@/services/autoReplyService";
+import { shareFiles } from "@/services/documentService";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {
@@ -73,6 +74,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
         // console.log(output );
         socket.emit("refresh-recents");
       })
+      socket.on("document-share", async (data) => {
+        let {data:sharedData,error} = await shareFiles(data.id,data.user_id,data.receiver_id,token);
+        if(error!==null){
+          console.log("Error sending doument to user ");
+          
+        }
+          const receiverSocketId = getUserSocketMap().get(data.receiver_id);
+          if (receiverSocketId) {
+            io.to(receiverSocketId).emit("receive-message", sharedData);
+          }
+      })
 
       socket.on("disconnect", () => {
         removeUserSocket(userId);
@@ -104,11 +116,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
   async function handleSendMessage(socket: any, token: string, message: Message) {
     console.log("📨 Message received from:", socket.id);
 
-    const pushErr = await pushMessage(token, message);
+    const {data:pushedData,error:pushedError} = await pushMessage(token, message);
     socket.emit("sent-message");
 
-    if (pushErr) {
-      return console.error("❌ Error pushing message:", pushErr);
+    if (pushedError) {
+      return console.error("❌ Error pushing message:", pushedError);
     }
 
     const receiverSocketId = getUserSocketMap().get(message.receiver_id);
