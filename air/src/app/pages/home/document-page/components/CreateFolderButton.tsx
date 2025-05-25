@@ -26,7 +26,7 @@ export default function CreateFolderButton({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 ">
       <input
         type="text"
         placeholder="Folder name"

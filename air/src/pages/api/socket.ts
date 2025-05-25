@@ -9,7 +9,8 @@ import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
 import { setSocketServer, setUserSocket, getUserSocketMap, removeUserSocket } from "@/utils/socketStore";
 import { assert_generate_autoreply, autoReplyOllama } from "@/services/autoReplyService";
-import { shareFiles } from "@/services/documentService";
+import documentSearchHandler, { shareFiles } from "@/services/documentService";
+import { searchFiles } from "@/app/pages/home/document-page/utils/api";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {
@@ -84,6 +85,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
           if (receiverSocketId) {
             io.to(receiverSocketId).emit("receive-message", sharedData);
           }
+      })
+
+      socket.on("document-search",async (data)=>{
+        // console.log("entered");
+        
+        const {data:searchData, error:searchError} = await documentSearchHandler(data.query,data.userId, data.parentId, token)
+        // console.log("search data: ",searchData, searchError);
+        
+        socket.emit("search-result",{data:searchData, error:searchError});
       })
 
       socket.on("disconnect", () => {

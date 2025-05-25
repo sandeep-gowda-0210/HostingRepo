@@ -139,3 +139,28 @@ export async function shareDocuments(id: string, userId: string, receiverId:stri
   //   return res;
   // }
 }
+
+
+
+export const searchFiles = async (
+  query: string,
+  userId: string,
+  parentId?: string | null
+) => {
+
+  const dataBody = {
+    query,
+    userId,
+    parentId
+  }
+  // console.log("calling: ",dataBody);
+  
+  socket.emit("document-search",dataBody);
+  return ;
+  // const params = new URLSearchParams({ query, userId });
+  // if (parentId) params.append("parentId", parentId);
+
+  // const res = await fetch(`/api/search-files?${params.toString()}`);
+  // if (!res.ok) throw new Error("Search failed");
+  // return res.json();
+};

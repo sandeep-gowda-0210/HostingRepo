@@ -1,13 +1,21 @@
 import React, { useEffect, useState, useRef } from "react";
-import { listFiles, frontendRenameFileOrFolder } from "../utils/api";
+import { listFiles, frontendRenameFileOrFolder, searchFiles } from "../utils/api";
 
 import CreateFolderButton from "./CreateFolderButton";
 import UploadModal from "./UploadModal";
 import DeleteButton from "./DeleteButton";
 import PreviewButton from "./PreviewButton";
 
-import { FiFolder, FiFile, FiMoreVertical, FiArrowLeft, FiShare2, FiSend } from "react-icons/fi";
+import {
+  FiFolder,
+  FiFile,
+  FiMoreVertical,
+  FiArrowLeft,
+  FiSend,
+  FiSearch,
+} from "react-icons/fi";
 import ChatDialogue from "./ChatDialogue";
+import socket from "@/utils/socket";
 
 interface FileItem {
   id: string;
@@ -29,20 +37,12 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [navigationStack, setNavigationStack] = useState<(string | null)[]>([]);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [shareItemId, setShareItemId] = useState<string | null>(null);
-
-
+  const [searchQuery, setSearchQuery] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [fileToSend, setFileToSend] = useState<FileItem | null>(null);
 
-  const handleSendFile = (file: FileItem) => {
-    setFileToSend(file);
-    setIsChatOpen(true);
-  };
-
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -62,6 +62,24 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
     }
   };
 
+  useEffect(()=>{
+    socket.on("search-result",async(result)=>{
+      try{
+      console.log("the searched data is ",result);
+      if (result.data) {
+            const sorted = [...result.data].sort((a, b) =>
+              a.type === b.type ? 0 : a.type === "folder" ? -1 : 1
+            );
+            setItems(sorted);
+          }
+        } catch (error) {
+          console.error("Search error:", error);
+        }
+    })
+    return ()=>{
+      socket.off("search-result");
+    }
+  })
   useEffect(() => {
     fetchItems();
   }, [currentParentId]);
@@ -83,6 +101,18 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuOpenFor]);
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      if (!searchQuery.trim()) {
+        fetchItems();
+      } else {
+          await searchFiles(searchQuery.trim(), userId, currentParentId);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, userId, currentParentId]);
 
   const startRename = (item: FileItem) => {
     setRenamingId(item.id);
@@ -107,6 +137,7 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
   };
 
   const openFolder = (folderId: string) => {
+    setSearchQuery('');
     setNavigationStack((prev) => [...prev, currentParentId]);
     setCurrentParentId(folderId);
   };
@@ -121,15 +152,9 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
     });
   };
 
-  const openShareDialog = (itemId: string) => {
-    setShareItemId(itemId);
-    setShareDialogOpen(true);
-    setMenuOpenFor(null);
-  };
-
-  const closeShareDialog = () => {
-    setShareDialogOpen(false);
-    setShareItemId(null);
+  const handleSendFile = (file: FileItem) => {
+    setFileToSend(file);
+    setIsChatOpen(true);
   };
 
   return (
@@ -145,7 +170,18 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
             </button>
           )}
         </div>
-        <div className="flex gap-10">
+
+        <div className="flex items-center gap-20">
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search files & folders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 rounded bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+            />
+          </div>
           <CreateFolderButton currentParentId={currentParentId} userId={userId} onFolderCreated={fetchItems} />
           <UploadModal parentId={currentParentId} userId={userId} onUploadSuccess={fetchItems} />
         </div>
@@ -194,22 +230,30 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                 <div className="flex items-center gap-2 ml-5">
                   {isRenaming ? (
                     <>
-                      <button onClick={saveRename} className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded cursor-pointer">Save</button>
-                      <button onClick={cancelRename} className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-4 py-1 rounded cursor-pointer">Cancel</button>
+                      <button
+                        onClick={saveRename}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded cursor-pointer"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelRename}
+                        className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-4 py-1 rounded cursor-pointer"
+                      >
+                        Cancel
+                      </button>
                     </>
                   ) : (
                     <>
-
-                      {!isMenuOpen && item.type === "file" && <PreviewButton fileId={item.id} userId={userId} />}
-
-                      {!isMenuOpen && item.type === "file" &&
+                      {item.type === "file" && <PreviewButton fileId={item.id} userId={userId} />}
+                      {item.type === "file" && (
                         <button
                           onClick={() => handleSendFile(item)}
                           className="p-2 hover:bg-gray-700 rounded cursor-pointer"
                         >
                           <FiSend className="text-gray-300" size={18} />
-                        </button>}
-
+                        </button>
+                      )}
                       <button
                         ref={isMenuOpen ? buttonRef : null}
                         onClick={() => setMenuOpenFor(isMenuOpen ? null : item.id)}
@@ -218,9 +262,24 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                         <FiMoreVertical className="text-gray-300" size={18} />
                       </button>
                       {isMenuOpen && (
-                        <div ref={menuRef} className="absolute right-0 mt-10 w-36 bg-gray-800 border border-gray-700 rounded shadow-lg z-20">
-                          <button className="w-full text-left px-4 py-2 hover:bg-gray-900 cursor-pointer rounded" onClick={() => startRename(item)}>Rename</button>
-                          <DeleteButton itemId={item.id} userId={userId} onDeleteSuccess={() => { fetchItems(); setMenuOpenFor(null); }} />
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 mt-10 w-36 bg-gray-800 border border-gray-700 rounded shadow-lg z-20"
+                        >
+                          <button
+                            className="w-full text-left px-4 py-2 hover:bg-gray-900 cursor-pointer rounded"
+                            onClick={() => startRename(item)}
+                          >
+                            Rename
+                          </button>
+                          <DeleteButton
+                            itemId={item.id}
+                            userId={userId}
+                            onDeleteSuccess={() => {
+                              fetchItems();
+                              setMenuOpenFor(null);
+                            }}
+                          />
                         </div>
                       )}
                     </>
@@ -231,6 +290,7 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
           })}
         </div>
       )}
+
       {isChatOpen && fileToSend && (
         <ChatDialogue
           isOpen={isChatOpen}
@@ -238,10 +298,8 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
             setIsChatOpen(false);
             setFileToSend(null);
           }}
-          onUserSelect={() => {
-            // You can handle post-send state updates here if needed
-          }}
-          fileToSend={fileToSend.id} // or however you reconstruct the File object
+          onUserSelect={() => {}}
+          fileToSend={fileToSend.id}
         />
       )}
     </div>

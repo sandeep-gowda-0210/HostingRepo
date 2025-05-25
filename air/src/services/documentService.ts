@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { createSupabaseWithToken } from "@/utils/socket";
 import { pushMessage } from './chatService';
 import { Message } from '@/app/pages/home/chat-page/chat-window/page';
+import { log } from 'node:console';
 
 export const createFolder = async (name: string, parent_id: string, token: string, user_id: string) => {
   try {
@@ -35,7 +36,7 @@ type DocumentItem = {
   id: string;
   user_id: string;
   type: 'file' | 'folder';
-  path?: string; 
+  path?: string;
 };
 
 export const deleteFileOrFolder = async (id: string, token: string, user_id: string) => {
@@ -333,7 +334,7 @@ export const shareFiles = async (id: string, user_id: string, receiver_id: strin
       //   reader.onerror = reject;
       //   reader.readAsDataURL(downloadFileData);
       // });
-      
+
       function getLocalDateTimeString() {
         const now = new Date();
         const offset = now.getTimezoneOffset();
@@ -349,23 +350,62 @@ export const shareFiles = async (id: string, user_id: string, receiver_id: strin
         sender_id: user_id,
         receiver_id,
         type: fileData.type,
-        time_stamp:getLocalDateTimeString(),
+        time_stamp: getLocalDateTimeString(),
         file: {
           name: data.name,
           type: fileData.type,
           data: fileBlob, // Or convert to base64 if needed
         },
       };
-      let {data:pushedData,error:pushedError} = await pushMessage(token, messagePayload)
-      if(pushedError){
-        console.log("error ",pushedError);
-        return {data:pushedData,error:null}
+      let { data: pushedData, error: pushedError } = await pushMessage(token, messagePayload)
+      if (pushedError) {
+        console.log("error ", pushedError);
+        return { data: pushedData, error: null }
       }
 
-      return { data:pushedData, error: null };
+      return { data: pushedData, error: null };
     }
   } catch (err) {
     console.error(err);
     return { data: null, error: 'Server error' };
   }
 };
+
+
+
+export default async function documentSearchHandler(query: string, userId: string, parentId: string, token: string) {
+  const supabaseWithToken = await createSupabaseWithToken(token);
+  // console.log("entered");
+  
+  if (parentId===null) {
+    const { data, error } = await supabaseWithToken
+      .from('DocumentsMeta') // replace with your actual table name
+      .select('*')
+      .ilike('name', `%${query}%`)
+      .eq('user_id', userId)
+
+    // console.log("searched data", data, error);
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return { data, error: null };
+  }
+  else{
+    // console.log("entereddd", parentId);
+    
+  const { data, error } = await supabaseWithToken
+    .from('DocumentsMeta') // replace with your actual table name
+    .select('*')
+    .ilike('name', `%${query}%`)
+    .eq('user_id', userId)
+    .eq('parent_id',parentId);
+
+  // console.log("searched data", data, error);
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  return { data, error: null };
+}
+}
