@@ -1,4 +1,4 @@
-import { useId } from "react";
+import socket from "@/utils/socket";
 
 export async function frontendUploadFile(
   file: File,
@@ -113,6 +113,7 @@ export async function frontendCreateFolder(
 
 export async function shareDocuments(id: string, userId: string, receiverId:string){
   
+  // socket.emit("document-share",{})
   const res = await fetch(`/api/documentservice/share-docs`,{
     method: 'POST',
       body: JSON.stringify({ id, user_id:userId, receiver_id:receiverId }),

@@ -8,4 +8,4 @@ async function run() {
   }
 }
 
-setInterval(run, 10000); // every 10 seconds
+setInterval(run, 10000);

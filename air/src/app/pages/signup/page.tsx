@@ -1,7 +1,7 @@
-// components/AuthForm.tsx
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 export default function SignupForm() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -12,69 +12,90 @@ export default function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    try{
-    const response = await fetch('/api/userauth/signup',{
-      method: 'POST',
-      body: JSON.stringify({ email, password, username, firstname }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    if(response.status===200) router.push('/pages/home/chat-page');
-  }
-  catch(error){
-    if (error) setMessage(`${error}`);
-    // else setMessage('✅ Signup successful! Check your email to confirm.');
-  }
+    try {
+      const response = await fetch('/api/userauth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, username, firstname }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) router.push('/pages/home/chat-page');
+    } catch (error) {
+      setMessage(`${error}`);
+    }
   };
 
   return (
-    <div className='flex justify-center mt-20'>
-            <div className="flex flex-col gap-2 max-w-sm">
-    <form onSubmit={handleSignup} className="flex flex-col gap-2 max-w-sm">
-      <input
-        type="email"
-        value={email}
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="border p-2 rounded"
-      />
-      <input
-        type="username"
-        value={username}
-        placeholder="username"
-        onChange={(e) => setUsername(e.target.value)}
-        required
-        className="border p-2 rounded"
-      />
-      <input
-        type="firstname"
-        value={firstname}
-        placeholder="firstname"
-        onChange={(e) => setFirstname(e.target.value)}
-        required
-        className="border p-2 rounded"
-      />
-      <input
-        type="password"
-        value={password}
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="border p-2 rounded"
-      />
-      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-        Sign Up
-      </button>
-      {message && <p>{message}</p>}
-    </form>
-      <div className='border-t-orange-400 border-t-2 border-dashed text-center mt-5'>
-        go to login page if account exists
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <div className="bg-gray-900 border border-gray-700 shadow-2xl rounded-2xl px-10 py-12 w-full max-w-md space-y-6">
+        <h2 className="text-3xl font-bold text-center">Create Account</h2>
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Email</label>
+            <input
+              type="email"
+              value={email}
+              placeholder="you@example.com"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 mt-1 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Username</label>
+            <input
+              type="text"
+              value={username}
+              placeholder="unique_username"
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full px-4 py-2 mt-1 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">First Name</label>
+            <input
+              type="text"
+              value={firstname}
+              placeholder="John"
+              onChange={(e) => setFirstname(e.target.value)}
+              required
+              className="w-full px-4 py-2 mt-1 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Password</label>
+            <input
+              type="password"
+              value={password}
+              placeholder="••••••••"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 mt-1 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+            />
+          </div>
 
+          {message && <p className="text-red-400 text-sm">{message}</p>}
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200"
+          >
+            Sign Up
+          </button>
+        </form>
+
+        <div className="text-center text-sm text-gray-400 mt-4 border-t border-gray-700 pt-4">
+          Already have an account?
+          <button
+            onClick={() => router.push('/pages/login')}
+            className="ml-1 text-blue-400 hover:underline"
+          >
+            Log in
+          </button>
+        </div>
       </div>
-        <button className="bg-blue-300 text-white p-2 rounded mt-5 w-full" onClick={()=>router.push('/pages/login')}>Login</button>
     </div>
-      </div>
   );
 }

@@ -72,7 +72,8 @@ const ScheduleMessageForm: React.FC<ScheduleMessageFormProps> = ({ senderId, rec
     e.preventDefault();
     setLoading(true);
     setStatus('');
-
+    console.log("send time ", sendTime);
+    
     try {
       const res = await fetch('/api/chatservice/scheduleMessages/setSchedule', {
         method: 'POST',

@@ -8,14 +8,13 @@ export default function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-
-  const [loading, setLoading] = useState<Boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    
+    e.preventDefault();
     setMessage('');
     setLoading(true);
-    e.preventDefault();
+    
     const res = await fetch('/api/userauth/signin', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -23,52 +22,67 @@ export default function SignupForm() {
         'Content-Type': 'application/json',
       },
     });
-    console.log("called");
+
+    setLoading(false);
+
     if (res.ok) {
       router.push('/pages/home/chat-page');
     } else {
-      setMessage('Login failed');
+      setMessage('Login failed. Please check your credentials.');
     }
-    setLoading(false);
-
-  }
-
+  };
 
   return (
-    <div className={`flex justify-center  w-[100vw] h-[100vh]`}>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white relative">
       {loading && (
-        <div className="absolute inset-0 z-10 bg-[#0000008c] flex justify-center items-center">
+        <div className="absolute inset-0 z-10 bg-black bg-opacity-50 flex justify-center items-center">
           <CircularLoader />
         </div>
       )}
-      <div className="flex flex-col gap-2 max-w-sm pt-20">
-        <form onSubmit={handleLogin} className="flex flex-col gap-2 max-w-sm">
-          <input
-            type="email"
-            value={email}
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="border p-2 rounded"
-          />
-          <input
-            type="password"
-            value={password}
-            placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="border p-2 rounded"
-          />
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded cursor-pointer hover:bg-blue-600 transition-all ease-in-out duration-200">
+
+      <div className="bg-gray-900 border border-gray-700 shadow-xl rounded-2xl px-10 py-12 w-full max-w-md space-y-6">
+        <h2 className="text-3xl font-bold text-center">Login</h2>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+              className="w-full px-4 py-2 mt-1 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              className="w-full px-4 py-2 mt-1 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+            />
+          </div>
+          {message && <p className="text-red-400 text-sm">{message}</p>}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+          >
             Log In
           </button>
-          {message && <p>{message}</p>}
         </form>
-        <div className='border-t-orange-400 border-t-2 border-dashed text-center mt-5'>
-          go to signup page if account doesn't exists
 
+        <div className="text-center text-sm text-gray-400 mt-4 border-t border-gray-700 pt-4">
+          Don’t have an account?
+          <button
+            onClick={() => router.push('/pages/signup')}
+            className="ml-1 text-blue-400 hover:underline"
+          >
+            Sign up
+          </button>
         </div>
-        <button className="bg-blue-500 text-white p-2 rounded mt-10 w-full" onClick={() => { router.push('/pages/signup') }}>signup</button>
       </div>
     </div>
   );

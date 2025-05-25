@@ -13,7 +13,7 @@ type Profile = {
 
 type Contact = Profile & {
   last_message_time: string;
-  notification_status:Boolean
+  notification_status: Boolean
 };
 export const getContacts = async (token: string) => {
   const supabaseWithToken = await createSupabaseWithToken(token);
@@ -55,16 +55,16 @@ export const getContacts = async (token: string) => {
         const contactId = friend.sender_id === user.id ? friend.receiver_id : friend.sender_id;
         const profile = contactProfiles.find(p => p.user_id === contactId);
 
-        
-      const notificationStatus = friend.sender_id === user.id
-        ? false  // override to false when user sent the message
-        : friend.notification_status;
+
+        const notificationStatus = friend.sender_id === user.id
+          ? false  // override to false when user sent the message
+          : friend.notification_status;
 
         return profile
           ? {
             ...profile,
             last_message_time: friend.last_message_time,
-            notification_status:notificationStatus,
+            notification_status: notificationStatus,
           }
           : null;
       });
@@ -101,13 +101,11 @@ export const getSearchedContacts = async (token: string, query: string) => {
 
 export const pushMessage = async (token: string, messagePayload: Partial<Message>) => {
   const supabaseWithToken = await createSupabaseWithToken(token);
-let fileUrl: string | null = null;
+  let fileUrl: string | null = null;
   let fileName: string | null = null;
-console.log("Entered push message", messagePayload.file, typeof messagePayload.file?.data);
 
   if (messagePayload.file && typeof messagePayload.file.data === "string") {
-    console.log("entered");
-    
+
     const { name, type, data: base64Data } = messagePayload.file;
     const base64 = base64Data.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
@@ -133,7 +131,7 @@ console.log("Entered push message", messagePayload.file, typeof messagePayload.f
     return;
   }
 
-  const { iv, encryptedData } = encrypt(messagePayload.content||'');
+  const { iv, encryptedData } = encrypt(messagePayload.content || '');
 
   const { error: insertError } = await supabaseWithToken
     .from("Message")
@@ -152,8 +150,8 @@ console.log("Entered push message", messagePayload.file, typeof messagePayload.f
     return insertError;
   }
 
-  if(messagePayload.sender_id && messagePayload.receiver_id)
-  await setUserFriendList(token, messagePayload.sender_id, messagePayload.receiver_id);
+  if (messagePayload.sender_id && messagePayload.receiver_id)
+    await setUserFriendList(token, messagePayload.sender_id, messagePayload.receiver_id);
   return null;
 
 }
@@ -167,7 +165,6 @@ export const fetchMessages = async (token: string, from_user_id: string, to_user
     .select('*').or(
       `and(sender_id.eq.${from_user_id},receiver_id.eq.${to_user_id}),and(sender_id.eq.${to_user_id},receiver_id.eq.${from_user_id})`
     );
-  // console.log("message Data inserted error", error);
   if (data) {
     data = data.map((element) => {
       element["content"] = decrypt(
@@ -184,6 +181,7 @@ export const fetchMessages = async (token: string, from_user_id: string, to_user
 
 export const setScheduleMessage = async (token: string, scheduleData: scheduleMessageType) => {
   const supabaseWithToken = await createSupabaseWithToken(token);
+  console.log("set ", scheduleData);
 
   const { error } = await supabaseWithToken
     .from('ScheduleMessage')
@@ -220,7 +218,6 @@ export const sendScheduledMessage = async () => {
   if (!messages || messages.length === 0) {
     return NextResponse.json({ message: 'No messages to send' }, { status: 200 });
   }
-  // console.log("sending message....");
 
   for (const msg of messages) {
     const { sender_id, receiver_id, message_content, id } = msg;
@@ -241,21 +238,39 @@ export const sendScheduledMessage = async () => {
     }
     if (!insertError) {
       const { error } = await supabaseSuperClient
-    .from('UserFriendList')
-    .upsert([{
-      sender_id,
-      receiver_id,
-      last_message_time: new Date().toISOString(),
-      notification_status:true
-    }], {
-      onConflict: 'sender_id,receiver_id'
-    });
-  if (error !== null) {
-    console.log("error ", error);
-  }
-  else {
-    console.log("successfully inserted");
-  }
+        .from('UserFriendList')
+        .upsert([{
+          sender_id,
+          receiver_id,
+          last_message_time: new Date().toISOString(),
+          notification_status: true
+        }], {
+          onConflict: 'sender_id,receiver_id'
+        });
+      if (error !== null) {
+        console.log("error ", error);
+      }
+      else {
+        console.log("successfully inserted");
+
+        if (sender_id && receiver_id) {
+          const now = new Date().toISOString();
+          // console.log("setting user list ", sender_id,receiver_id,now);
+          const { error } = await supabaseSuperClient
+            .from('UserFriendList')
+            .upsert([{
+              sender_id,
+              receiver_id,
+              last_message_time: now,
+              notification_status: true
+            }], {
+              onConflict: 'sender_id,receiver_id'
+            });
+          // return NextResponse.json({ message: 'Messages sent and saved .' });
+        }
+        // return NextResponse.json({ message: 'Messages sent and not saved .' });
+      }
+      // return NextResponse.json({ message: error });
       const io = getSocketServer();
       const userSocketMap = getUserSocketMap();
       // console.log("io ", io, "usersocketMap ", userSocketMap);
@@ -273,6 +288,8 @@ export const sendScheduledMessage = async () => {
       // }
     }
 
+
+
     const { data, error } = await supabaseSuperClient
       .from('ScheduleMessage')
       .delete()
@@ -283,7 +300,6 @@ export const sendScheduledMessage = async () => {
     }
 
   }
-
   return NextResponse.json({ message: 'Messages sent' });
 }
 
@@ -292,7 +308,7 @@ export const sendScheduledMessage = async () => {
 export const getScheduledMessages = async (token: string, from_user_id: string, to_user_id: string) => {
   const supabaseWithToken = await createSupabaseWithToken(token);
 
-  const now = getLocalDateTimeString();
+  // const now = getLocalDateTimeString();
   // console.log("time",now);
   const { data: messages, error } = await supabaseWithToken
     .from('ScheduleMessage')
@@ -310,10 +326,15 @@ export const getScheduledMessages = async (token: string, from_user_id: string, 
     return { data: null, error: null }
   }
 
-  return { data: messages, error: null }
+  const convertedMessages = messages.map((msg) => ({
+    ...msg,
+    send_time: msg.send_time.slice(0, 16),
+  }));
+
+  // console.log("converted messages", messages);
+
+  return { data: convertedMessages, error: null }
 }
-
-
 
 
 export const deleteScheduledMessage = async (token: string, message_id: string) => {
@@ -335,7 +356,6 @@ export const deleteScheduledMessage = async (token: string, message_id: string) 
 
 
 import crypto from "crypto";
-import { sendError } from "next/dist/server/api-utils";
 
 
 const algorithm = "aes-256-cbc";
@@ -374,8 +394,6 @@ export function decrypt(encryptedData: string, ivHex: string) {
 
 export async function setUserFriendList(token: string, sender_id: string, receiver_id: string) {
   const supabaseWithToken = await createSupabaseWithToken(token);
-
-
   const now = new Date().toISOString();
   // console.log("setting user list ", sender_id,receiver_id,now);
   const { error } = await supabaseWithToken
@@ -384,7 +402,7 @@ export async function setUserFriendList(token: string, sender_id: string, receiv
       sender_id,
       receiver_id,
       last_message_time: now,
-      notification_status:true
+      notification_status: true
     }], {
       onConflict: 'sender_id,receiver_id'
     });
@@ -406,10 +424,10 @@ export async function setUserFriendListNotification(token: string, sender_id: st
   const { error } = await supabaseWithToken
     .from('UserFriendList')
     .update({
-    notification_status: false
-  })
-  .eq('sender_id', sender_id)
-  .eq('receiver_id', receiver_id);
+      notification_status: false
+    })
+    .eq('sender_id', sender_id)
+    .eq('receiver_id', receiver_id);
   if (error !== null) {
     console.log("error:: ", error);
   }
@@ -418,6 +436,6 @@ export async function setUserFriendListNotification(token: string, sender_id: st
 
   }
   // console.log("enterreed");
-  
+
   return error;
 }

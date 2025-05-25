@@ -113,7 +113,7 @@ function RecentChats() {
         {recentLoading ? (
           <div className='h-full w-full pt-30 flex justify-center items-center'><CircularLoader/></div>
         ) : contacts === null || contacts.length === 0 ? (
-          <div>No contacts found.</div>
+          <div className='text-lg text-center'>No contacts found...</div>
         ) : (
           <ul className="space-y-3">
             {contacts && contacts

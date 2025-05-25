@@ -14,7 +14,7 @@ export async function GET(req:Request) {
         if(error!==null || data===null){
             return NextResponse.json({error,message:"No data found"},{status:400});
         }
-        console.log(data,"    ", error);
+        // console.log(data,"    ", error);
         return NextResponse.json({data},{status:200});
         
     }

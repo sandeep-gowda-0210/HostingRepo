@@ -37,6 +37,7 @@ const ChatDialogue = ({ isOpen, onClose, onUserSelect, fileToSend }: ChatDialogu
 
   const handleUserSelect = async (selectedUser: User) => {
     onUserSelect(selectedUser.user_id);
+    onClose();
 
     if (fileToSend && user?.user_id) {
       console.log("file to send", fileToSend);
@@ -52,7 +53,6 @@ const ChatDialogue = ({ isOpen, onClose, onUserSelect, fileToSend }: ChatDialogu
       }
     }
 
-    onClose();
   };
 
   if (!isOpen) return null;
