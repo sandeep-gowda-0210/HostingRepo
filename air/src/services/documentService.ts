@@ -30,41 +30,92 @@ export const createFolder = async (name: string, parent_id: string, token: strin
 
 
 
+
+type DocumentItem = {
+  id: string;
+  user_id: string;
+  type: 'file' | 'folder';
+  path?: string; 
+};
+
 export const deleteFileOrFolder = async (id: string, token: string, user_id: string) => {
   try {
-    const supabaseWithToken = await createSupabaseWithToken(token);
-    const { data: existingFile, error: findError } = await supabaseWithToken
+    const supabase = await createSupabaseWithToken(token);
+
+    // Fetch the root item
+    const { data: rootItem, error: findError } = await supabase
       .from('DocumentsMeta')
-      .select('id, user_id, url, type')
+      .select('id, user_id, type, path')
       .eq('id', id)
       .single();
 
-    if (findError || !existingFile) {
+    if (findError || !rootItem) {
       return { data: null, error: 'File or folder not found' };
     }
 
-    if (existingFile.user_id !== user_id) {
+    if (rootItem.user_id !== user_id) {
       return { data: null, error: 'You are not authorized to delete this' };
     }
 
-    if (existingFile.type === 'file' && existingFile.url) {
-      const filePath = existingFile.url.split('/documents/')[1];
-      await supabaseWithToken.storage.from('documents').remove([filePath]);
+    // Recursive function to get all descendants of a folder
+    const getAllDescendants = async (parentId: string): Promise<DocumentItem[]> => {
+      const { data: children, error } = await supabase
+        .from('DocumentsMeta')
+        .select('id, user_id, type, path')
+        .eq('parent_id', parentId);
+
+      if (error || !children) return [];
+
+      const all: DocumentItem[] = [];
+
+      for (const child of children) {
+        all.push(child);
+        if (child.type === 'folder') {
+          const descendants = await getAllDescendants(child.id);
+          all.push(...descendants);
+        }
+      }
+
+      return all;
+    };
+
+    // Get all items to delete
+    const itemsToDelete: DocumentItem[] =
+      rootItem.type === 'folder'
+        ? [rootItem, ...(await getAllDescendants(rootItem.id))]
+        : [rootItem];
+
+    // Collect paths of all files to delete from storage
+    const filePaths = itemsToDelete
+      .filter((item) => item.type === 'file' && item.path)
+      .map((file) => file.path!);
+
+    if (filePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove(filePaths);
+
+      if (storageError) {
+        console.error('Storage delete error:', storageError);
+        return { data: null, error: 'Failed to delete files from storage' };
+      }
     }
 
-    const { error: deleteError } = await supabaseWithToken
+    // Delete all metadata entries
+    const idsToDelete = itemsToDelete.map((item) => item.id);
+    const { error: deleteError } = await supabase
       .from('DocumentsMeta')
       .delete()
-      .eq('id', id);
+      .in('id', idsToDelete);
 
     if (deleteError) {
       console.error(deleteError);
-      return { data: null, error: 'Failed to delete file/folder' };
+      return { data: null, error: 'Failed to delete from metadata' };
     }
 
     return { data: 'Deleted successfully', error: null };
   } catch (err) {
-    console.error(err);
+    console.error('Unexpected error:', err);
     return { data: null, error: 'Server error' };
   }
 };
