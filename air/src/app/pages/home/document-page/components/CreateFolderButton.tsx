@@ -33,7 +33,7 @@ export default function CreateFolderButton({
         placeholder="Folder name"
         value={folderName}
         onChange={(e) => setFolderName(e.target.value)}
-        className="border px-2 py-1 rounded"
+        className="border px-2 py-1 rounded min-w-0 max-w-[300px] flex-1"
       />
       <button
         onClick={handleCreateFolder}

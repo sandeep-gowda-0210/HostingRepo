@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CircularLoader } from '@/components/loader/Loader';
 
@@ -10,6 +10,9 @@ export default function SignupForm() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState<boolean>(false);
 
+  useEffect(()=>{
+    setLoading(false);
+  })
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -29,7 +32,6 @@ export default function SignupForm() {
     } else {
       setMessage('Login failed. Please check your credentials.');
     }
-    setLoading(false);
   };
 
   return (

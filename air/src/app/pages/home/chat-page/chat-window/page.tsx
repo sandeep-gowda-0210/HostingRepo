@@ -5,7 +5,8 @@ import { useUserData } from '@/context/UserContext';
 import ScheduleMessageForm from '@/components/scheduleMessage/ScheduleMessage';
 import AutoReplySettings from '@/components/autoReply/AutoReply';
 import { playNotificationSound } from '@/utils/notification';
-
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 import { ArrowLeft } from "lucide-react";
 // type Timestamp = string | Date;
 
@@ -37,8 +38,28 @@ function ChatWindow() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+
   const containerRef = useRef<HTMLInputElement | null>(null);;
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
@@ -144,6 +165,11 @@ function ChatWindow() {
   }, [currentUserId, selectedUser?.user_id]);
 
 
+  const addEmoji = (emoji: any) => {
+    setNewMessage(prev => prev + emoji.native);
+    setShowEmojiPicker(false);
+  };
+  
   const handleSend = useCallback(async () => {
     console.log((!newMessage.trim() && !selectedFile) || !selectedUser || !currentUserId, !selectedFile);
 
@@ -496,7 +522,12 @@ function ChatWindow() {
               className="hidden"
               ref={fileInputRef}
             />
-
+<button 
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className='p-2 px-3 mx-1 rounded-lg hover:bg-[#2f2f2f] transition-all duration-300 ease-in-out cursor-pointer'
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-smile"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
+              </button>
             <button
               onClick={() => fileInputRef.current?.click()}
               className="p-1 sm:p-2 rounded-lg hover:bg-[#2f2f2f] transition-all duration-300 text-white"
@@ -539,6 +570,17 @@ function ChatWindow() {
               />
             </svg>
           </button>
+           {showEmojiPicker && (
+              <div ref={emojiPickerRef} className="absolute bottom-14 right-16 z-50">
+                <Picker 
+                  data={data} 
+                  onEmojiSelect={addEmoji} 
+                  theme="dark"
+                  previewPosition="none"
+                  skinTonePosition="none"
+                />
+              </div>
+            )}
         </div>
 
       </>

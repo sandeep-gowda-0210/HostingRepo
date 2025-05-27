@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { io } from "socket.io-client";
 
-const socket = io("https://air-iils.onrender.com",{
+const socket = io("http://localhost:3000",{
   path: "/api/socket",
   transports: ["websocket"],
   autoConnect:false
