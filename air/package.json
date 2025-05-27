@@ -10,8 +10,6 @@
     "bg-work": "ts-node scheduler/scheduler.ts"
   },
   "dependencies": {
-    "@emoji-mart/data": "^1.2.1",
-    "@emoji-mart/react": "^1.1.1",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.49.4",
     "cookie": "^1.0.2",
