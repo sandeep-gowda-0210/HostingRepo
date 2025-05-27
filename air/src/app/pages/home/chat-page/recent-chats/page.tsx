@@ -133,10 +133,10 @@ function RecentChats() {
                 />
                 <div className="overflow-hidden">
                   <div className="text-sm font-medium truncate">
-                    {isSelf ? contact.user_name+" (You)" : contact.email_id}
+                    {isSelf ? contact.user_name+" (You)" : contact.user_name}
                   </div>
                   <div className="text-xs text-gray-400 truncate">
-                    {isSelf ? contact.user_name : contact.email_id}
+                    {contact.email_id}
                   </div>
                 </div>
               </div>
