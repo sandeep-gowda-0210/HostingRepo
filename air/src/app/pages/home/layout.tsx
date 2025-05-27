@@ -116,14 +116,22 @@ useEffect(()=>{
 
   return <UserContext.Provider value={{user,setUser,refreshUser:fetchData,setSelectedUser,selectedUser,refreshRecentChatFlag, triggerRefreshRecentChat}}>
     {/* <Navbar/> */}
-    {loading?<div className="flex w-full h-screen justify-center items-center text-6xl font-bold text-gray-400">Loading....</div>:<div className="max-h-[100vh]">
-    {/* <div className="flex w-full justify-center h-[5rem] items-center text-2xl font-bold text-gray-400">
-    
-      Welcome {user?.first_name}</div> */}
-    {/* { children } */}
+    {loading ? (
+  <div className="flex w-full h-screen justify-center items-center bg-gradient-to-b from-gray-900 via-gray-950 to-gray-900 text-5xl font-semibold text-blue-500 select-none animate-pulse">
+    Loading...
+  </div>
+) : (
+  <div className="max-h-[100vh] bg-[#121212] text-blue-300">
+    {/* Optional welcome message */}
+    {/* 
+    <div className="flex w-full justify-center h-20 items-center text-2xl font-semibold text-blue-400 select-none">
+      Welcome {user?.first_name}
+    </div> 
+    */}
+
     <Layout user={user}>{children}</Layout>
-    </div>
-    }
+  </div>
+)}
   </UserContext.Provider>
 }
 

@@ -62,27 +62,27 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
     }
   };
 
-  useEffect(()=>{
-    socket.on("search-result",async(result)=>{
-      try{
-      console.log("the searched data is ",result);
-      if (result.data) {
-            const sorted = [...result.data].sort((a, b) =>
-              a.type === b.type ? 0 : a.type === "folder" ? -1 : 1
-            );
-            setItems(sorted);
-          }
-        } catch (error) {
-          console.error("Search error:", error);
+  useEffect(() => {
+    socket.on("search-result", async (result) => {
+      try {
+        console.log("the searched data is ", result);
+        if (result.data) {
+          const sorted = [...result.data].sort((a, b) =>
+            a.type === b.type ? 0 : a.type === "folder" ? -1 : 1
+          );
+          setItems(sorted);
         }
+      } catch (error) {
+        console.error("Search error:", error);
+      }
     })
-    return ()=>{
+    return () => {
       socket.off("search-result");
     }
   })
-  useEffect(() => {
-    fetchItems();
-  }, [currentParentId]);
+  // useEffect(() => {
+  //   fetchItems();
+  // }, [currentParentId]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -107,7 +107,7 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
       if (!searchQuery.trim()) {
         fetchItems();
       } else {
-          await searchFiles(searchQuery.trim(), userId, currentParentId);
+        await searchFiles(searchQuery.trim(), userId, currentParentId);
       }
     }, 400);
 
@@ -158,39 +158,59 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
   };
 
   return (
-    <div className="bg-gray-900 h-full max-h-[90%] p-6 text-gray-200 overflow-y-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-gray-900 h-full max-h-[90%] p-2 sm:p-6 text-gray-200 overflow-y-auto">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-6">
+        {/* Back Button */}
         <div className="flex items-center gap-2">
           {navigationStack.length > 0 && (
             <button
               onClick={goBack}
-              className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-gray-200"
+              className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-gray-200 text-sm"
             >
               <FiArrowLeft size={18} /> Back
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-20">
-          <div className="relative">
+        {/* Right Side: Search + Create + Upload */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2">
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
             <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={18} />
             <input
               type="text"
               placeholder="Search files & folders..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 rounded bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+              className="w-full pl-10 pr-4 py-2 rounded bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <CreateFolderButton currentParentId={currentParentId} userId={userId} onFolderCreated={fetchItems} />
-          <UploadModal parentId={currentParentId} userId={userId} onUploadSuccess={fetchItems} />
+
+          {/* Create Folder Button */}
+          <div className="w-full sm:w-auto">
+            <CreateFolderButton
+              currentParentId={currentParentId}
+              userId={userId}
+              onFolderCreated={fetchItems}
+            />
+          </div>
+
+          {/* Upload Modal Button */}
+          <div className="w-full sm:w-auto">
+            <UploadModal
+              parentId={currentParentId}
+              userId={userId}
+              onUploadSuccess={fetchItems}
+            />
+          </div>
         </div>
       </div>
+
 
       {loading ? (
         <div className="text-center text-gray-400">Loading...</div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-4 p-2">
           {items.map((item) => {
             const isRenaming = renamingId === item.id;
             const isMenuOpen = menuOpenFor === item.id;
@@ -198,18 +218,20 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between bg-gray-800 rounded-md p-3 hover:bg-gray-700 transition-colors relative"
+                className="flex items-center justify-between bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-all relative w-full"
                 onDoubleClick={() => {
                   if (item.type === "file") setPreviewFileId(item.id);
                   else if (item.type === "folder") openFolder(item.id);
                 }}
               >
-                <div className="flex items-center gap-3 flex-1 cursor-pointer select-none">
+                {/* Icon & Name */}
+                <div className="flex items-center gap-3 flex-1 cursor-pointer select-none overflow-hidden">
                   {item.type === "folder" ? (
-                    <FiFolder className="text-blue-400" size={20} />
+                    <FiFolder className="text-blue-400 shrink-0" size={20} />
                   ) : (
-                    <FiFile className="text-gray-400" size={20} />
+                    <FiFile className="text-gray-400 shrink-0" size={20} />
                   )}
+
                   {isRenaming ? (
                     <input
                       type="text"
@@ -220,76 +242,84 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                         else if (e.key === "Escape") cancelRename();
                       }}
                       autoFocus
-                      className="bg-gray-700 text-gray-200 border border-gray-600 rounded px-2 py-1 flex-grow"
+                      className="bg-gray-700 text-gray-200 border border-gray-600 rounded px-2 py-1 w-full"
                     />
                   ) : (
-                    <span className="truncate">{item.name}</span>
+                    <span className="truncate text-sm">{item.name}</span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 ml-5">
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 ml-3 shrink-0">
                   {isRenaming ? (
                     <>
                       <button
                         onClick={saveRename}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded cursor-pointer"
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-sm rounded"
                       >
                         Save
                       </button>
                       <button
                         onClick={cancelRename}
-                        className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-4 py-1 rounded cursor-pointer"
+                        className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-3 py-1 text-sm rounded"
                       >
                         Cancel
                       </button>
                     </>
                   ) : (
                     <>
-                      {item.type === "file" && <PreviewButton fileId={item.id} userId={userId} />}
                       {item.type === "file" && (
-                        <button
-                          onClick={() => handleSendFile(item)}
-                          className="p-2 hover:bg-gray-700 rounded cursor-pointer"
-                        >
-                          <FiSend className="text-gray-300" size={18} />
-                        </button>
+                        <PreviewButton fileId={item.id} userId={userId} />
                       )}
+
                       <button
                         ref={isMenuOpen ? buttonRef : null}
                         onClick={() => setMenuOpenFor(isMenuOpen ? null : item.id)}
-                        className="p-2 hover:bg-gray-700 rounded cursor-pointer"
+                        className="p-2 hover:bg-gray-700 rounded"
                       >
                         <FiMoreVertical className="text-gray-300" size={18} />
                       </button>
-                      {isMenuOpen && (
-                        <div
-                          ref={menuRef}
-                          className="absolute right-0 mt-10 w-36 bg-gray-800 border border-gray-700 rounded shadow-lg z-20"
-                        >
-                          <button
-                            className="w-full text-left px-4 py-2 hover:bg-gray-900 cursor-pointer rounded"
-                            onClick={() => startRename(item)}
-                          >
-                            Rename
-                          </button>
-                          <DeleteButton
-                            itemId={item.id}
-                            userId={userId}
-                            onDeleteSuccess={() => {
-                              fetchItems();
-                              setMenuOpenFor(null);
-                            }}
-                          />
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                  <div
+                    ref={menuRef}
+                    className="absolute right-2 top-full mt-2 w-20 sm:w-40 min-w-max bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
+                  >
+                    <button
+                      className="w-full text-left px-4 py-2 hover:bg-gray-900 border-gray-600 border-b-1"
+                      onClick={() => startRename(item)}
+                    >
+                      Rename
+                    </button>
+                    {item.type === "file" && (
+                      <button
+                        onClick={() => handleSendFile(item)}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-900 border-gray-600 border-b-1"
+                      >
+                        {/* <span>Share</span>  <FiSend className="text-gray-300" size={18} /> */}
+                        Share
+                      </button>
+                    )}
+                    <DeleteButton
+                      itemId={item.id}
+                      userId={userId}
+                      onDeleteSuccess={() => {
+                        fetchItems();
+                        setMenuOpenFor(null);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
+
 
       {isChatOpen && fileToSend && (
         <ChatDialogue
@@ -298,7 +328,7 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
             setIsChatOpen(false);
             setFileToSend(null);
           }}
-          onUserSelect={() => {}}
+          onUserSelect={() => { }}
           fileToSend={fileToSend.id}
         />
       )}

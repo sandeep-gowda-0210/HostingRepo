@@ -23,13 +23,13 @@ export default function SignupForm() {
       },
     });
 
-    setLoading(false);
-
+    
     if (res.ok) {
       router.push('/pages/home/chat-page');
     } else {
       setMessage('Login failed. Please check your credentials.');
     }
+    setLoading(false);
   };
 
   return (

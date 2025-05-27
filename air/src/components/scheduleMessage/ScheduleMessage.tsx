@@ -73,7 +73,7 @@ const ScheduleMessageForm: React.FC<ScheduleMessageFormProps> = ({ senderId, rec
     setLoading(true);
     setStatus('');
     console.log("send time ", sendTime);
-    
+
     try {
       const res = await fetch('/api/chatservice/scheduleMessages/setSchedule', {
         method: 'POST',
@@ -107,77 +107,93 @@ const ScheduleMessageForm: React.FC<ScheduleMessageFormProps> = ({ senderId, rec
   };
 
   return (
-    <div className='w-full h-full overflow-auto  flex flex-col p-5 items-center'>
+    <div className="w-full h-full overflow-auto flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* View Scheduled Messages */}
-      <div className=" mb-10 border-b-1 pb-10 rounded-sm p-5 w-full">
-        <h2 className="text-xl font-semibold mb-4">Scheduled Messages</h2>
-        {deleteStatus && <p className="mt-4 text-sm text-green-700 pb-2">{deleteStatus}</p>}
+      <div className="mb-10 border-b border-gray-300 dark:border-gray-700 pb-10 rounded-sm p-4 sm:p-6 w-full max-w-3xl bg-gray-50 dark:bg-gray-800 shadow">
+        <h2 className="text-xl sm:text-2xl font-semibold mb-4">Scheduled Messages</h2>
 
-        {fetchLoad ? <div className='text-lg'>Loading...</div> :
-          scheduledMessages.length === 0 ? (
-            <p className="text-base">No scheduled messages.</p>
-          ) : (
-            <ul className="space-y-4">
-              {scheduledMessages.map((msg) => (
-                <li key={msg.id} className="border p-4 rounded shadow flex justify-between items-center w-full">
-                  <div>
-                    <p className="text-lg">{msg.message_content}</p>
-                    <p className="text-sm text-gray-600">Send at: {new Date(msg.send_time).toLocaleString()}</p>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(msg.id)}
-                    className="bg-red-500 text-white text-lg px-3 py-1 rounded hover:bg-red-600 flex items-center justify-center min-w-[80px]"
-                    disabled={deleteLoading?true:false}
-                  >
-                    {deleteLoading === msg.id ? <CircularLoader /> : "Delete"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+        {deleteStatus && (
+          <p className="mt-2 text-sm text-green-600 dark:text-green-400">{deleteStatus}</p>
+        )}
 
+        {fetchLoad ? (
+          <div className="text-base sm:text-lg">Loading...</div>
+        ) : scheduledMessages.length === 0 ? (
+          <p className="text-base">No scheduled messages.</p>
+        ) : (
+          <ul className="space-y-4 mt-4">
+            {scheduledMessages.map((msg) => (
+              <li
+                key={msg.id}
+                className="border p-4 rounded shadow flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4 w-full bg-white dark:bg-gray-700"
+              >
+                <div className="flex-1">
+                  <p className="text-base sm:text-lg break-words">{msg.message_content}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Send at: {new Date(msg.send_time).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDelete(msg.id)}
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm sm:text-base min-w-[100px] flex items-center justify-center transition-all duration-300"
+                  disabled={deleteLoading ? true : false}
+                >
+                  {deleteLoading === msg.id ? <CircularLoader /> : "Delete"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-
       {/* Schedule Form */}
-      <div className='w-full text-lg p-5'>
-
-        <label className="block mb-1 font-medium">Schedule New Message</label>
-        <form onSubmit={handleSubmit} className="space-y-8 mx-auto text-lg  rounded shadow flex flex-col justify-center items-center h-full w-full">
-          <div className=''>
+      <div className="w-full max-w-3xl bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 rounded shadow text-base sm:text-lg">
+        <label className="block mb-2 font-semibold">Schedule New Message</label>
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 flex flex-col w-full"
+        >
+          {/* Message Input */}
+          <div>
             <label className="block mb-1 font-medium">Message Content</label>
             <textarea
               value={messageContent}
               onChange={(e) => setMessageContent(e.target.value)}
               required
-              className="border  p-2 rounded"
+              className="w-full border p-2 rounded bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
           </div>
 
-          <div className={`${!messageContent?"hidden":null}`}>
-            <label className="block mb-1 font-medium">Send Time</label>
-            <input
-              type="datetime-local"
-              value={sendTime}
-              onChange={(e) => setSendTime(e.target.value)}
-              required
-              min={new Date().toISOString().slice(0, 16)}
-              className="border p-2 w-full text-black rounded bg-[#a5a4a4]"
-            />
-          </div>
+          {/* Send Time Input */}
+          {messageContent && (
+            <div>
+              <label className="block mb-1 font-medium">Send Time</label>
+              <input
+                type="datetime-local"
+                value={sendTime}
+                onChange={(e) => setSendTime(e.target.value)}
+                required
+                min={new Date().toISOString().slice(0, 16)}
+                className="border p-2 w-full rounded bg-[#a5a4a4] text-black dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              />
+            </div>
+          )}
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer min-w-[12rem] flex justify-center items-center transition-all duration-300 ease-in-out"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 min-w-[12rem] flex justify-center items-center transition-all duration-300 ease-in-out"
           >
-            {loading ? <CircularLoader/> : 'Schedule Message'}
+            {loading ? <CircularLoader /> : "Schedule Message"}
           </button>
 
-          {status && <div className="text-sm mt-2">{status}</div>}
+          {/* Status */}
+          {status && <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">{status}</div>}
         </form>
       </div>
     </div>
+
   );
 };
 

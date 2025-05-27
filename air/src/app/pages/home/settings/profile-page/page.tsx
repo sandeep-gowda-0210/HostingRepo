@@ -5,28 +5,47 @@ import { useState, useEffect } from 'react';
 export default function Profile(){
     let {user} = useUserData();
     console.log("this is page",user);
-    return <div className="flex flex-col h-full w-full justify-center">
-        <div className="flex flex-col h-full w-full text-5xl text-blue-300 font-extralight p-5">
-          <div className="w-full">
-            Profile
-          </div>
-          <div className="h-full w-full flex">
-          <div className="flex text-2xl flex-1/4 flex-col  p-5 pt-10 ">
-            <div className="flex ">
-              <img src={`${user?.profile_url}?t=${new Date().getTime()}`} className="h-70 w-60 rounded-full mr-8"/>
-            <label htmlFor="fileInput" className="relative h-fit top-50 right-15  inline-block cursor-pointer  space-x-2 text-blue-600 hover:text-blue-800">
-          <svg width="40" height="40" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645ZM12.5 2.20711L8.91091 5.79618L7.87266 7.87267L8.12731 8.12732L10.2038 7.08907L13.7929 3.5L12.5 2.20711ZM9.99998 2L8.99998 3H4.9C4.47171 3 4.18056 3.00039 3.95552 3.01877C3.73631 3.03668 3.62421 3.06915 3.54601 3.10899C3.35785 3.20487 3.20487 3.35785 3.10899 3.54601C3.06915 3.62421 3.03669 3.73631 3.01878 3.95552C3.00039 4.18056 3 4.47171 3 4.9V11.1C3 11.5283 3.00039 11.8194 3.01878 12.0445C3.03669 12.2637 3.06915 12.3758 3.10899 12.454C3.20487 12.6422 3.35785 12.7951 3.54601 12.891C3.62421 12.9309 3.73631 12.9633 3.95552 12.9812C4.18056 12.9996 4.47171 13 4.9 13H11.1C11.5283 13 11.8194 12.9996 12.0445 12.9812C12.2637 12.9633 12.3758 12.9309 12.454 12.891C12.6422 12.7951 12.7951 12.6422 12.891 12.454C12.9309 12.3758 12.9633 12.2637 12.9812 12.0445C12.9996 11.8194 13 11.5283 13 11.1V6.99998L14 5.99998V11.1V11.1207C14 11.5231 14 11.8553 13.9779 12.1259C13.9549 12.407 13.9057 12.6653 13.782 12.908C13.5903 13.2843 13.2843 13.5903 12.908 13.782C12.6653 13.9057 12.407 13.9549 12.1259 13.9779C11.8553 14 11.5231 14 11.1207 14H11.1H4.9H4.87934C4.47686 14 4.14468 14 3.87409 13.9779C3.59304 13.9549 3.33469 13.9057 3.09202 13.782C2.7157 13.5903 2.40973 13.2843 2.21799 12.908C2.09434 12.6653 2.04506 12.407 2.0221 12.1259C1.99999 11.8553 1.99999 11.5231 2 11.1207V11.1206V11.1V4.9V4.87935V4.87932V4.87931C1.99999 4.47685 1.99999 4.14468 2.0221 3.87409C2.04506 3.59304 2.09434 3.33469 2.21799 3.09202C2.40973 2.71569 2.7157 2.40973 3.09202 2.21799C3.33469 2.09434 3.59304 2.04506 3.87409 2.0221C4.14468 1.99999 4.47685 1.99999 4.87932 2H4.87935H4.9H9.99998Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
-        {/* <span className="text-lg">Choose Profile Image</span> */}
-      </label>
-            </div>
-            <UploadForm/>
-          </div>
-          <div className="flex-2/3 h-full flex pt-10 justify-center">
-          <UpdateUserData/>
-          </div>
-          </div>
-        </div>
+    return <div className="flex flex-col w-full h-full items-center px-4 py-6 dark:bg-[#0f172a] bg-white text-gray-800 dark:text-gray-100">
+  <div className="text-2xl sm:text-5xl font-extralight text-blue-500 dark:text-blue-300 mb-6">
+    Profile
+  </div>
+
+  <div className="flex flex-col lg:flex-row w-full max-w-7xl items-start gap-10 overflow-y-auto">
+    {/* LEFT SECTION: Profile Picture & Upload */}
+    <div className="flex flex-col items-center w-full lg:w-1/3 gap-6">
+      <div className="relative">
+        <img
+          src={`${user?.profile_url}?t=${new Date().getTime()}`}
+          alt="Profile"
+          className="h-60 w-60 object-cover rounded-full border-4 border-blue-300 dark:border-blue-600"
+        />
+        <label
+          htmlFor="fileInput"
+          className="absolute bottom-2 right-2 bg-white dark:bg-gray-800 p-2 rounded-full cursor-pointer hover:scale-105 transition-all"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 15 15"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-blue-600 dark:text-blue-300"
+          >
+            <path d="M12.1464 1.14645C12.3417 0.951184 12.6583 0.951184 12.8535 1.14645L14.8535 3.14645C15.0488 3.34171 15.0488 3.65829 14.8535 3.85355L10.9109 7.79618C10.8349 7.87218 10.7471 7.93543 10.651 7.9835L6.72359 9.94721C6.53109 10.0435 6.29861 10.0057 6.14643 9.85355C5.99425 9.70137 5.95652 9.46889 6.05277 9.27639L8.01648 5.34897C8.06455 5.25283 8.1278 5.16507 8.2038 5.08907L12.1464 1.14645Z" />
+            <path d="m15 5-4-4" />
+          </svg>
+        </label>
+      </div>
+      <UploadForm />
     </div>
+
+    {/* RIGHT SECTION: User Data Form */}
+    <div className="flex-1 w-full">
+      <UpdateUserData />
+    </div>
+  </div>
+</div>
+
 }
 export function UploadForm() {
     let {user,refreshUser} = useUserData();
@@ -63,28 +82,44 @@ export function UploadForm() {
     }
   
     return (
-      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col ml-10 w-full  mt-10">
-        <div className="flex items-center flex-col w-fit">
-        <input
-          type="file"
-          id="fileInput"
-          accept="image/*"
-          onChange={(e) => setImage(e.target.files?.[0] || null)}
-          className="hidden"
+      <form 
+  onSubmit={handleSubmit} 
+  className="flex flex-col items-center sm:items-start space-y-4 w-full sm:w-auto mt-10 px-4 sm:px-10"
+>
+  <div className="flex flex-col items-center sm:items-start w-full max-w-xs sm:max-w-sm">
+    {/* Hidden File Input */}
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*"
+      onChange={(e) => setImage(e.target.files?.[0] || null)}
+      className="hidden"
+    />
+
+    {/* Upload Button (conditionally shown) */}
+    {previewUrl && (
+      <button 
+        type="submit" 
+        className="bg-blue-600 hover:bg-blue-700 transition-all text-white px-4 py-2 rounded w-fit text-sm sm:text-base"
+      >
+        Upload
+      </button>
+    )}
+
+    {/* Image Preview */}
+    {previewUrl && (
+      <div className="mt-4 text-center sm:text-left">
+        <p className="text-sm text-gray-600 mb-1">Preview:</p>
+        <img 
+          src={previewUrl} 
+          alt="Image Preview" 
+          className="w-32 h-32 sm:w-36 sm:h-36 object-cover rounded shadow-md"
         />
-        {previewUrl && <button type="submit" className="bg-blue-600 text-white px-4 py-2 w-fit  rounded">
-          Upload
-        </button>}
-        <div>
-        {previewUrl && (
-          <div>
-            <p className="text-sm text-gray-600">Preview:</p>
-            <img src={previewUrl} alt="Image Preview" className="w-32 h-32 object-cover rounded" />
-          </div>
-        )}
-        </div>
-        </div>
-      </form>
+      </div>
+    )}
+  </div>
+</form>
+
     )
   }
 
@@ -147,60 +182,86 @@ export function UpdateUserData() {
   };
 
   return (
-    <div className="w-[90%]">
-      {loading ? (
-        <div>LOADING...</div>
-      ) : (
-        <form className="text-lg w-full">
-          {editUser &&
-            Object.entries(editUser).map(([key, value]) => {
-              const isEditing = editingField === key;
+    <div className="w-[90%] max-w-4xl mx-auto p-4 overflow-auto text-sm">
+  {loading ? (
+    <div className="text-gray-400 text-center text-xl">Loading...</div>
+  ) : (
+    <form className="space-y-6">
+      {editUser &&
+        Object.entries(editUser).map(([key, value]) => {
+          const isEditing = editingField === key;
 
-              return (
-                <div key={key} className="h-full w-full mb-4 flex gap-3 justify-center items-center">
-                  <label htmlFor={key} className="block font-bold mb-1 w-1/4">
-                    {key.replaceAll("_", " ")}
-                  </label>
-                  <textarea
-                    id={key}
-                    className="text-gray-300 p-1 border-b-2 border-b-gray-400 h-auto border-transparent text-center outline-0 resize-none w-full min-h-[2rem] max-w-1/2"
-                    disabled={!isEditing}
-                    placeholder="-"
-                    value={value ?? ""}
-                    onChange={(e) => handleInputChange(key, e.target.value)}
-                  />
-                  {!isEditing && (
+          return (
+            <div
+              key={key}
+              className="flex flex-col sm:flex-row sm:items-center gap-3 bg-[#1e1e1e] p-4 rounded-xl border border-gray-700 shadow-md transition-all"
+            >
+              <label htmlFor={key} className="font-semibold text-gray-300 sm:w-1/4 capitalize">
+                {key.replaceAll("_", " ")}
+              </label>
+
+              <textarea
+                id={key}
+                className={`bg-transparent border-b-2 text-gray-100 p-2 outline-none transition duration-300 resize-none w-full sm:w-3/4 ${
+                  isEditing
+                    ? 'border-blue-500 focus:ring-2 focus:ring-blue-500'
+                    : 'border-gray-600'
+                }`}
+                disabled={!isEditing}
+                placeholder="-"
+                value={value ?? ""}
+                onChange={(e) => handleInputChange(key, e.target.value)}
+              />
+
+              <div className="flex gap-2 items-center mt-2 sm:mt-0">
+                {!isEditing ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditingField(key)}
+                    className="p-2 text-gray-300 hover:text-white transition hover:scale-105"
+                    aria-label="Edit"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-pencil"
+                    >
+                      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+                      <path d="m15 5 4 4" />
+                    </svg>
+                  </button>
+                ) : (
+                  <>
                     <button
                       type="button"
-                      onClick={() => setEditingField(key)}
-                      className="ml-2 px-2 py-1 bg-blue-600 hover:text-gray-300  text-white rounded hover:cursor-pointer "
+                      onClick={handleSave}
+                      className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-500 transition"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="transform hover:scale-105 lucide lucide-pencil-icon lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                      Save
                     </button>
-                  )}
-                  {isEditing && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleSave}
-                        className="ml-2 px-2 py-1 bg-green-600 text-white rounded"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="ml-2 px-2 py-1 bg-gray-500 text-white rounded"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-        </form>
-      )}
-    </div>
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-gray-500 transition"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+    </form>
+  )}
+</div>
+
   );
 }

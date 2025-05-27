@@ -38,7 +38,7 @@ export default function CreateFolderButton({
         onClick={handleCreateFolder}
         className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer hover:bg-blue-700 transition-all ease-in-out duration-50"
       >
-        + Folder
+        +
       </button>
     </div>
   );

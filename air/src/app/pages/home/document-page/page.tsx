@@ -9,8 +9,9 @@ export default function DashboardPage() {
 
   return (
     userId && 
-    <main className="h-full bg-black text-white p-6">
+    <main className="h-full bg-gray-900 text-white p-6 rounded-lg">
       <h1 className="text-2xl font-bold mb-4">Document Manager</h1>
+      <div className='border-1 border-gray-700'></div>
       <FileExplorer userId={userId} />
     </main>
   );
