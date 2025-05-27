@@ -1,6 +1,18 @@
-import { User } from '@/app/pages/home/layout';
+
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseWithToken } from "@/utils/socket";
+
+
+type User = {
+  user_id: string;
+  user_name: string;
+  first_name: string;
+  last_name: string;
+  email_id: string;
+  profile_url: string;
+  status: string;
+  bio: string;
+};
 
 export const uploadProfile = async(file:File , user_id:string, token:string) =>{
     const supabaseWithToken = await createSupabaseWithToken(token);

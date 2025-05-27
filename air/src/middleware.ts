@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from 'next/server';
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import supabase from "@/lib/supabaseClient";
 
 export async function middleware(req: NextRequest){
@@ -11,7 +11,7 @@ export async function middleware(req: NextRequest){
     // }
     // return NextResponse.next();
     
-    const cookies = cookie.parse(req.headers.get('cookie')||'');
+    const cookies = parse(req.headers.get('cookie')||'');
     const {data,error} = await supabase.auth.getUser(cookies['login-token']);
     if(error || !data){
         return NextResponse.redirect(new URL('/pages/login',req.url));

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import socket from '@/utils/socket';
-import { useUserData } from '../../layout';
+import { useUserData } from '@/context/UserContext';
 import { shareDocuments } from '../utils/api';
 
 type ChatDialogueProps = {

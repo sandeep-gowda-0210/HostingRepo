@@ -1,8 +1,8 @@
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { NextResponse } from 'next/server';
 import { createFolder } from '@/services/documentService';
 export async function POST(req:Request){
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token']!;
     const {name,parent_id, user_id} = await req.json();
     // console.log("The list is ", name, parent_id || null, user_id);

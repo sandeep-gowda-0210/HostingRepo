@@ -1,8 +1,8 @@
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { uploadProfile } from '@/services/userService';
 import { NextResponse } from 'next/server';
 export async function POST(req:Request){
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token']!;
     const formData = await req.formData();
     const file = formData.get('file') as File;

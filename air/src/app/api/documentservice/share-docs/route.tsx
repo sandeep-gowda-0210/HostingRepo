@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import {  shareFiles } from "@/services/documentService";
 
 export async function POST(req:Request){
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token'];    
     const {id, user_id, receiver_id} = await req.json();
 

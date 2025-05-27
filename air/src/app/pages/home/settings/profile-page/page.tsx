@@ -1,6 +1,6 @@
 'use client'
-import { User } from "../../layout";
-import { useUserData } from "../../layout"
+import { User } from "@/context/UserContext";
+import { useUserData } from "@/context/UserContext"
 import { useState, useEffect } from 'react';
 export default function Profile(){
     let {user} = useUserData();
@@ -47,7 +47,7 @@ export default function Profile(){
 </div>
 
 }
-export function UploadForm() {
+function UploadForm() {
     let {user,refreshUser} = useUserData();
     const [image, setImage] = useState<File | null>(null)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -132,7 +132,7 @@ export function UploadForm() {
 //   return { user, refreshUser, setUser };
 // }
 
-export function UpdateUserData() {
+function UpdateUserData() {
   const { user,refreshUser } = useUserData();
   const [editUser, setEditUser] = useState<Partial<User> | null>(null);
   const [originalUser, setOriginalUser] = useState<Partial<User> | null>(null);

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react";
-import { useUserData } from "../layout"
+import { useUserData } from "@/context/UserContext"
 import RecentChats from "./recent-chats/page";
 import ChatWindow from "./chat-window/page";
 export default function Chat() {

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { deleteScheduledMessage } from "@/services/chatService";
 
 export async function DELETE(req:Request) {
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token'];
     const { searchParams } = new URL(req.url);
     const message_id = searchParams.get('message_id');

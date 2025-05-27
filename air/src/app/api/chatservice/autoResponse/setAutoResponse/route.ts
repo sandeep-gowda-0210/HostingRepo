@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { setAutoReply } from "@/services/autoReplyService";
 
 export type autoReplyType = {
     autoReplyEnabled:Boolean, historyDays:number, user_id:string,selecteduser_id:string 
 }
 export async function POST(req:Request) {
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token'];
     if(token){
 

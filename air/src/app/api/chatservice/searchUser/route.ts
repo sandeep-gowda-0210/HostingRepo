@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { NextApiRequest, NextApiResponse } from "next";
 import { getSearchedContacts } from "@/services/chatService";
 
 export async function GET(req: Request) {
 
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token'];
     if(!token){
         return NextResponse.json({error:'unatutorized!!'},{status:401})

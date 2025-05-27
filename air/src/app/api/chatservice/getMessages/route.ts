@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { fetchMessages, getContacts } from "@/services/chatService";
 
 export async function GET(req:Request){
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token'];
     const { searchParams } = new URL(req.url);
     const from_user_id = searchParams.get('from');

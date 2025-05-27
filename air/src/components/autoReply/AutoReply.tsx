@@ -1,4 +1,4 @@
-import { useUserData } from "@/app/pages/home/layout";
+import { useUserData } from "@/context/UserContext";
 import { useEffect, useState } from "react";
 
 export default function AutoReplySettings() {

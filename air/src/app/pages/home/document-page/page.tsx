@@ -1,6 +1,6 @@
 // app/dashboard/page.tsx
 "use client"
-import { useUserData } from '../layout';
+import { useUserData } from '@/context/UserContext';
 import FileExplorer from './components/FileExplorer';
 
 export default function DashboardPage() {

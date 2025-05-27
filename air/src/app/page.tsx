@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
-export default function Page(req:Request){
+export default function Page(){
     redirect('/pages/home/chat-page');
+    return null;
 }

@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import socket from '@/utils/socket';
-import { useUserData } from '../../layout';
+import { useUserData } from '@/context/UserContext';
 import ScheduleMessageForm from '@/components/scheduleMessage/ScheduleMessage';
 import AutoReplySettings from '@/components/autoReply/AutoReply';
-import { playNotificationSound } from '../recent-chats/page';
+import { playNotificationSound } from '@/utils/notification';
 
 import { ArrowLeft } from "lucide-react";
 // type Timestamp = string | Date;

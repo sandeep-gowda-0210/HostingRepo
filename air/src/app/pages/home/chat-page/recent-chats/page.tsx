@@ -1,16 +1,16 @@
 'use client'
 
 import React, { useEffect, useState, useContext } from 'react'
-import type { Contact } from '../../layout';
-import { useUserData } from '../../layout';
+import type { Contact } from '@/context/UserContext';
+import { useUserData } from '@/context/UserContext';
 import socket from '@/utils/socket';
 import { CircularLoader } from '@/components/loader/Loader';
-export const playNotificationSound = () => {
-  const notificationSound = new Audio("/resources/tap-notification.mp3");
-  notificationSound.play().catch(err => {
-    console.error("Audio play failed:", err);
-  });
-};
+// export const playNotificationSound = () => {
+//   const notificationSound = new Audio("/resources/tap-notification.mp3");
+//   notificationSound.play().catch(err => {
+//     console.error("Audio play failed:", err);
+//   });
+// };
 
 function RecentChats() {
   let [contacts, setContacts] = useState<Contact[] | null>(null);
@@ -42,7 +42,7 @@ function RecentChats() {
 
   }
   const handleContactClick = (contact: Contact) => {
-    // console.log("Clicked on contact:", contact);
+    console.log("Clicked on contact:", contact);
 
     setSelectedUser(contact);
     socket.emit("refreshActiveUsers");

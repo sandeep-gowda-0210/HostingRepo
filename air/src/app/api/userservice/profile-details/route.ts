@@ -1,9 +1,9 @@
 import { updateUserData } from '@/services/userService';
-import cookie from 'cookie';
+import { parse, serialize } from 'cookie'; // ✅ Correct
 import { NextResponse } from 'next/server';
 
 export async function POST(req:Request){
-    let cookies = cookie.parse(req.headers.get('cookie')||'');
+    let cookies = parse(req.headers.get('cookie')||'');
     let token = cookies['login-token']!;
     const { searchParams } = new URL(req.url);
     const user_id = searchParams.get('user_id');
