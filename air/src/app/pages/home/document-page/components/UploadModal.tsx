@@ -1,3 +1,4 @@
+'use client'
 import React, { useRef, useState, useEffect } from "react";
 import { FiUpload } from "react-icons/fi";
 import { frontendUploadFile } from "../utils/api";

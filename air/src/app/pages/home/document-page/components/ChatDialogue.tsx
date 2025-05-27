@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import socket from '@/utils/socket';
 import { useUserData } from '../../layout';

@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useState, useRef } from "react";
 import { listFiles, frontendRenameFileOrFolder, searchFiles } from "../utils/api";
 
