@@ -463,7 +463,7 @@ return ()=>{
           ) : (messages && messages.map((msg, index) => (
             <div
               key={index}
-              className={`max-w-[50%] sm:max-w-[60%] w-fit p-2 rounded-lg text-sm sm:text-sm break-words relative ${msg.sender_id === currentUserId
+              className={`max-w-[60%] sm:max-w-[70%] w-fit p-2 rounded-lg text-sm sm:text-sm break-words relative ${msg.sender_id === currentUserId
                   ? 'bg-[#414141] self-end ml-auto text-right'
                   : 'bg-[#222322] self-start mr-auto'
                 }`}
@@ -471,7 +471,7 @@ return ()=>{
               {/* Message Content */}
               {msg.type === 'text' ? (
                 <>
-                  <div className="whitespace-pre-wrap break-words text-[0.9em] sm:text-base text-justify">
+                  <div className="whitespace-pre-wrap break-words text-[0.9em] sm:text-base text-left">
                     {msg.content}
                   </div>
                 </>
