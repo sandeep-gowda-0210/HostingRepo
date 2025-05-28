@@ -216,7 +216,7 @@ export const sendScheduledMessage = async () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   const now = getLocalDateTimeString('Asia/Kolkata');;
-  console.log("time",now);
+  // console.log("time",now);
   const { data: messages, error } = await supabaseSuperClient
     .from('ScheduleMessage')
     .select('*')
