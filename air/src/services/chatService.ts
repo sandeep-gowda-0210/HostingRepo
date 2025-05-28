@@ -192,14 +192,22 @@ export const setScheduleMessage = async (token: string, scheduleData: scheduleMe
   return error;
 }
 
- function getLocalDateTimeString() {
+export function getLocalDateTimeString(timeZone = 'Asia/Kolkata') {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+
+  const dateTimeParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+
+  const parts = Object.fromEntries(dateTimeParts.map(p => [p.type, p.value]));
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
 export const sendScheduledMessage = async () => {
@@ -207,7 +215,7 @@ export const sendScheduledMessage = async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  const now = getLocalDateTimeString();
+  const now = getLocalDateTimeString('Asia/Kolkata');;
   console.log("time",now);
   const { data: messages, error } = await supabaseSuperClient
     .from('ScheduleMessage')
