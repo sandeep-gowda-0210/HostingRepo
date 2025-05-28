@@ -24,7 +24,7 @@ export default function Chat() {
 // </div>
 
 return <div className="flex max-h-[90vh] h-full w-full justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 text-blue-300 font-extralight text-5xl shadow-lg rounded-lg overflow-hidden">
-  <div className="relative flex w-full h-full gap-4 p-4 overflow-hidden">
+  <div className="relative flex w-full h-full gap-4 p-2 overflow-hidden">
     
     {/* Chat Slide Container */}
     <div className="relative w-full h-full flex overflow-hidden gap-4">
@@ -32,7 +32,7 @@ return <div className="flex max-h-[90vh] h-full w-full justify-center bg-gradien
       {/* Recent Chats */}
       <div
         className={`absolute sm:relative w-full sm:w-[30%] h-full bg-gray-850 rounded-lg shadow-inner overflow-y-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-700 z-20 transition-transform duration-1000 ease-in-out 
-        ${selectedUser ? "-translate-x-full sm:translate-x-0" : "translate-x-0 "}`}
+        ${selectedUser && socket.id ? "-translate-x-full sm:translate-x-0" : "translate-x-0 "}`}
       >
         <RecentChats />
       </div>
