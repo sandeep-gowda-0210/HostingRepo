@@ -3,7 +3,7 @@ import { Server as IOServer } from "socket.io";
 import { Server as HTTPServer } from "http";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { parse } from "cookie";
-import { pushMessage, setUserFriendListNotification } from "@/services/chatService";
+import { deleteMessageIfOwner, pushMessage, setUserFriendListNotification } from "@/services/chatService";
 
 import type { Message } from "@/app/pages/home/chat-page/chat-window/page";
 import { getUser } from "@/services/authService";
@@ -69,6 +69,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
         await handleSendMessage(socket, token, message);
       });
 
+      
+      socket.on("DeleteMessage",async (params)=>{
+        
+          const {success, message, error} = await deleteMessageIfOwner(params.messageId,params.sender_id,token);
+          // console.log("deleted", success,error, message);
+          
+          if(success){
+            socket.emit("DeletedMessage",message);
+          }
+          else{
+            socket.emit("DeletedMessageError",error);
+          }
+      })
+
       socket.on("notification-seen", async (users) => {
         console.log("entered notification seen");
         let output = await setUserFriendListNotification(token, users.sender_id, users.receiver_id);
@@ -86,6 +100,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponseWithSoc
             io.to(receiverSocketId).emit("receive-message", sharedData);
           }
       })
+
 
       socket.on("document-search",async (data)=>{
         // console.log("entered");

@@ -103,13 +103,13 @@ export const pushMessage = async (token: string, messagePayload: Partial<Message
   const supabaseWithToken = await createSupabaseWithToken(token);
   let fileUrl: string | null = null;
   let fileName: string | null = null;
-
+  let filePath
   if (messagePayload.file && typeof messagePayload.file.data === "string") {
-
+    
     const { name, type, data: base64Data } = messagePayload.file;
     const base64 = base64Data.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
-    const filePath = `messages/${Date.now()}-${name}`;
+    filePath = `messages/${Date.now()}-${name}`;
 
     const { error: uploadError } = await supabaseWithToken.storage
       .from("sharefiles")
@@ -128,9 +128,11 @@ export const pushMessage = async (token: string, messagePayload: Partial<Message
     fileName = name;
   } else if (messagePayload.file) {
     console.error("Expected file data as base64 string, but got:", typeof messagePayload.file.data);
-    return {data:null, error:null};
+    // return {data:null, error:null};
   }
 
+  // console.log("messages ",messagePayload);
+  
   const { iv, encryptedData } = encrypt(messagePayload.content || '');
 
   const {data:insertedData, error: insertError } = await supabaseWithToken
@@ -143,6 +145,7 @@ export const pushMessage = async (token: string, messagePayload: Partial<Message
       initial_vector: iv,
       file_url: fileUrl,
       file_name: fileName,
+      file_path:filePath,
     }).select().single();
 
   if (insertError) {
@@ -438,4 +441,52 @@ export async function setUserFriendListNotification(token: string, sender_id: st
   // console.log("enterreed");
 
   return error;
+}
+
+
+
+export async function deleteMessageIfOwner(messageId: string, sender_id: string, token:string) {
+   const supabaseWithToken = await createSupabaseWithToken(token);
+
+  // Step 1: Fetch the existing message with file_path and type
+  const { data: existingMessage, error: fetchError } = await supabaseWithToken
+    .from('Message')
+    .select('message_id, sender_id, file_path, type')
+    .eq('message_id', messageId)
+    .single();
+
+  console.log("Fetched message:", existingMessage, fetchError);
+
+  if (fetchError || !existingMessage) {
+    return { success: false, error: 'Message not found or fetch error.' };
+  }
+
+  if (existingMessage.sender_id !== sender_id) {
+    return { success: false, error: 'Unauthorized: sender mismatch.' };
+  }
+
+  // Step 2: If it's not a text message, delete the associated file
+  if (existingMessage.type !== 'text' && existingMessage.file_path) {
+    const { error: fileDeleteError } = await supabaseWithToken.storage
+      .from('sharefiles') // replace with your actual bucket name
+      .remove([existingMessage.file_path]);
+
+    if (fileDeleteError) {
+      console.error("File deletion error:", fileDeleteError);
+      return { success: false, error: 'Failed to delete file from storage.' };
+    }
+  }
+
+  // Step 3: Delete the message from the table
+  const { error: deleteError } = await supabaseWithToken
+    .from('Message')
+    .delete()
+    .eq('message_id', messageId)
+    .eq('sender_id', sender_id);
+
+  if (deleteError) {
+    return { success: false, error: 'Failed to delete message from database.' };
+  }
+
+  return { success: true, message: 'Message and file deleted successfully.' };
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, use } from 'react';
 import socket from '@/utils/socket';
 import { useUserData } from '@/context/UserContext';
 import ScheduleMessageForm from '@/components/scheduleMessage/ScheduleMessage';
@@ -29,6 +29,8 @@ function ChatWindow() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [scheduleMessagePage, setScheduleMessagePage] = useState<Boolean>(false);
+  const [caption, setCaption] = useState<string>('');
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const [autoReplyPage, setAutoReplyPage] = useState<Boolean>(false);
 
@@ -36,9 +38,51 @@ function ChatWindow() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
 
   const containerRef = useRef<HTMLInputElement | null>(null);;
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dropdown-container')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    // try {
+    //   await fetch(`/api/messages/${messageId}`, { method: 'DELETE' });
+    //   // refresh or remove from state
+    //   setMessages(prev => prev.filter(msg => msg.message_id !== messageId));
+    // } catch (err) {
+    //   console.error("Delete failed", err);
+    // }
+    
+    const params={messageId,sender_id:user?.user_id}
+    socket.emit("DeleteMessage",params);
+    console.log("message ", params);
+    socket.on("DeletedMessage",(message)=>{
+      loadMessages();
+      setMessages(prevMessages => prevMessages.filter(msg => msg.message_id !== messageId));
+      console.log("Deleted Successfully");
+    })
+    socket.on("DeletedMessageError",(error)=>{
+      console.log("Deletio Failed");
+    })
+return ()=>{
+  socket.off("DeleteMessage");
+  socket.off("DeletedMessageError")
+}
+  },[]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
@@ -57,6 +101,7 @@ function ChatWindow() {
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+    setIsAtBottom(true);
   };
 
 
@@ -178,6 +223,11 @@ function ChatWindow() {
         type: selectedFile.type,
         data: fileData,
       };
+      console.log("caption ", caption.trim());
+
+      messagePayload.content = caption.trim();
+      console.log(messagePayload);
+
     }
     console.log("sending message");
 
@@ -197,13 +247,14 @@ function ChatWindow() {
     // })
     // setMessages((prev) => [...prev, { ...messagePayload_1 }]);
     setNewMessage('');
+    setCaption('');
     setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
 
     // return () => { socket.off("sent-message") };
-  }, [newMessage, selectedUser, selectedFile, currentUserId]);
+  }, [newMessage, selectedUser, selectedFile, currentUserId, caption]);
 
   useEffect(() => {
     console.log("status", scheduleMessagePage);
@@ -350,7 +401,8 @@ function ChatWindow() {
 
     {/* Messages */}
     {selectedFile ? (
-      <div className="w-full flex flex-col items-center justify-center border rounded p-3 sm:p-4">
+      <div className='h-full w-full  flex flex-col items-center justify-center'>
+      <div className="w-fit flex flex-col items-center justify-center border rounded p-3 sm:p-4">
         <div className="text-center">
           <p className="mb-2 font-semibold text-sm sm:text-2xl">Input File:</p>
           {selectedFile.type.startsWith('image/') ? (
@@ -372,12 +424,29 @@ function ChatWindow() {
             </div>
           )}
         </div>
-        <button
-          onClick={handleSend}
-          className="my-6 px-4 py-2 text-base bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200"
-        >
-          Send
-        </button>
+        <input
+          type="text"
+          className="flex-1 min-w-0 text-sm sm:text-lg mt-10 border rounded px-2 sm:px-3 py-1 bg-transparent outline-none text-white placeholder:text-gray-300"
+          value={caption}
+          onChange={(e) =>
+            setCaption(e.target.value)}
+          placeholder="Type a Caption..."
+        />
+        <div className='flex items-center justify-center gap-[1rem] w-full'>
+          <button
+            onClick={handleSend}
+            className="my-6 px-4 py-2 text-base bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200"
+          >
+            Send
+          </button>
+          <button
+            onClick={() => { setSelectedFile(null); setCaption(''); setIsAtBottom(false) }}
+            className="my-6 px-4 py-2 text-base bg-red-600 text-white rounded hover:bg-red-700 transition duration-200"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
       </div>
     ) :
       !scheduleMessagePage && !autoReplyPage &&
@@ -391,27 +460,24 @@ function ChatWindow() {
             <div className="text-gray-500 text-xl sm:text-3xl flex h-full w-full justify-center items-center">
               No messages yet
             </div>
-          ) : (
-            messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`max-w-[50%] sm:max-w-[60%] w-fit p-2 rounded-lg text-sm sm:text-sm break-words ${msg.sender_id === currentUserId
+          ) : (messages && messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`max-w-[50%] sm:max-w-[60%] w-fit p-2 rounded-lg text-sm sm:text-sm break-words relative ${msg.sender_id === currentUserId
                   ? 'bg-[#414141] self-end ml-auto text-right'
                   : 'bg-[#222322] self-start mr-auto'
-                  }`}
-              >
-                {msg.type === 'text' ? (
-                  <>
-                    <div className="whitespace-pre-wrap break-words text-[0.9em] sm:text-base">{msg.content}</div>
-                    <div className="text-[0.7em] sm:text-[0.9em] text-gray-400 mt-1 text-right">
-                      {new Date(msg.time_stamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full max-w-xs sm:max-w-sm overflow-hidden rounded bg-[#404040] flex justify-center items-center flex-col">
+                }`}
+            >
+              {/* Message Content */}
+              {msg.type === 'text' ? (
+                <>
+                  <div className="whitespace-pre-wrap break-words text-[0.9em] sm:text-base text-justify">
+                    {msg.content}
+                  </div>
+                </>
+              ) : (
+                <div className="w-full max-w-xs sm:max-w-sm overflow-hidden rounded bg-[#404040] flex justify-center items-center flex-col">
+                  <div className='bg-gray-800 rounded-sm p-1'>
                     <div className="w-full max-h-20 sm:max-h-40 overflow-hidden">
                       {msg.type.startsWith("image/") ? (
                         <img
@@ -422,19 +488,20 @@ function ChatWindow() {
                       ) : msg.type === "application/pdf" ? (
                         <iframe
                           src={msg.file_url}
-                          className="w-full h-40 sm:h-60 rounded bg-black"
+                          className="w-full h-20 sm:h-40 rounded bg-black"
                           title="PDF Preview"
                         />
                       ) : msg.type.startsWith("video/") ? (
                         <video
                           src={msg.file_url}
                           controls
-                          className="w-full object-contain max-h-60 rounded bg-black"
+                          className="w-full object-contain max-h-20 sm:max-h-40 rounded bg-black"
                         />
                       ) : (
-                        // Fallback UI for unsupported file types
-                        <div className="w-40 sm:w-50 h-10 sm:h-20 bg-black rounded flex items-center justify-between px-4 border">
-                        </div>)}
+                        <div className="w-40 sm:w-50 h-10 sm:h-20 bg-gray-300 rounded flex items-center justify-between px-4 border">
+                          Unsupported file
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-1 sm:mt-2 rounded-lg cursor-pointer px-1 text-center w-full">
@@ -450,24 +517,58 @@ function ChatWindow() {
                         </a>
                       )}
                     </div>
-
-                    <div className="text-[10px] text-gray-400 mt-1 self-end">
-                      {new Date(msg.time_stamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                  </div>
+                  {msg.content && (
+                    <div className="mt-1 sm:mt-2 rounded-lg cursor-pointer px-1 text-justify w-full">
+                      {msg.content}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Timestamp and 3-dot menu */}
+              <div className="flex justify-between items-center mt-1 relative dropdown-container">
+                <div className="text-[0.7em] sm:text-[0.9em] text-gray-400">
+                  {new Date(msg.time_stamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
+
+                {/* 3-dot button */}
+                {msg.sender_id === currentUserId && <button
+                  onClick={() =>
+                    setOpenDropdownId(openDropdownId === msg.message_id ? null : msg.message_id)
+                  }
+                  className="ml-2 px-1 py-0.5 rounded-full hover:bg-gray-700 text-white transition-all duration-200"
+                  title="More"
+                >
+                  ⋮
+                </button>}
+
+                {/* Dropdown */}
+                {openDropdownId === msg.message_id && (
+                  <div className="absolute right-0 top-6 bg-[#2c2c2c] border border-gray-600 rounded-md shadow-lg z-50 w-24">
+                    <button
+                      onClick={() => {
+                        handleDeleteMessage(msg.message_id);
+                        setOpenDropdownId(null);
+                      }}
+                      className="block w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-600 hover:text-white transition-all duration-150"
+                    >
+                      Delete
+                    </button>
                   </div>
                 )}
               </div>
-            ))
-          )}
+            </div>
+          )))}
 
           <div ref={bottomRef} />
           {!isAtBottom && (
             <button
               onClick={scrollToBottom}
-              className="fixed text-lg bottom-24 right-5 sm:right-10 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all z-50"
+              className="fixed text-sm sm:text-lg bottom-24 right-5 sm:right-10 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all z-50 opacity-50 hover:opacity-100"
             >
               v
             </button>

@@ -10,7 +10,7 @@ export const groq_gen_auto_reply = async(summary:any,message:string)=>{
         "messages": [
         {
         "role":"user",
-            "content": `Context:${summary} \n"instruction": "Respond as if you are from_user in the context provided and reply like how he would.Generate a response to the next message solely based on the context provided, If the context does not provide enough information to respond, do not generate a reply instead send a message that 'I are not sure' and important note is that give replies within 2 lines and all the replies within a double quotes"\n"Message": "${message}?"\nReply:`
+            "content": `Context:${summary} \n"instruction": "Respond as if you are from_user in the context provided and reply like how he would.Generate a response to the next message solely based on the context provided, If the context does not provide enough information to respond, do not generate a reply instead send a message that 'I am not sure' and important note is that give replies within 1-2 lines and all the replies without enclosing in double quotes or single quotes, and also when asked who you are don't answer 'from_user' or 'to_user' remember this"\n"Message": "${message}?"\nReply:`
         }
         ],
         "model": "llama-3.1-8b-instant",
