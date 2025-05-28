@@ -205,7 +205,7 @@ export const sendScheduledMessage = async () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   const now = getLocalDateTimeString();
-  // console.log("time",now);
+  console.log("time",now);
   const { data: messages, error } = await supabaseSuperClient
     .from('ScheduleMessage')
     .select('*')
@@ -219,7 +219,7 @@ export const sendScheduledMessage = async () => {
   }
 
   if (!messages || messages.length === 0) {
-    return NextResponse.json({ message: 'No messages to send' }, { status: 200 });
+    return NextResponse.json({ message: 'No messages to send' , now}, { status: 200 });
   }
 
   for (const msg of messages) {
@@ -274,8 +274,8 @@ export const sendScheduledMessage = async () => {
         // return NextResponse.json({ message: 'Messages sent and not saved .' });
       }
       // return NextResponse.json({ message: error });
-      const io = getSocketServer();
-      const userSocketMap = getUserSocketMap();
+      // const io = getSocketServer();
+      // const userSocketMap = getUserSocketMap();
       // console.log("io ", io, "usersocketMap ", userSocketMap);
 
       // if (io && userSocketMap.has(receiver_id)) {
@@ -303,7 +303,7 @@ export const sendScheduledMessage = async () => {
     }
 
   }
-  return NextResponse.json({ message: 'Messages sent' });
+  return NextResponse.json({ message: 'Messages sent' , now});
 }
 
 
