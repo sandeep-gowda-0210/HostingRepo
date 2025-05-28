@@ -225,7 +225,7 @@ function ChatWindow() {
 
   if (!selectedUser || !socket.id) {
     return (
-      <div className='flex justify-center items-center h-full border-2 rounded-2xl'>
+      <div className='flex justify-center items-center h-full border-2 rounded-2xl text-lg sm:text-4xl'>
         No chat Selected
       </div>
     );

@@ -227,51 +227,51 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
               >
                 {/* Icon & Name */}
                 <div className="w-full flex flex-col items-center sm:flex-row gap-[1rem]">
-                  <div className="flex items-center gap-3 flex-1 cursor-pointer select-none overflow-hidden">
-                <div className="flex items-center gap-3 flex-1 cursor-pointer select-none overflow-hidden">
-                  {item.type === "folder" ? (
-                    <FiFolder className="text-blue-400 shrink-0" size={20} />
-                  ) : (
-                    <FiFile className="text-gray-400 shrink-0" size={20} />
-                  )}
-
-                  {isRenaming ? (
-                    <input
-                      type="text"
-                      value={renameValue}
-                      onChange={(e) => setRenameValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveRename();
-                        else if (e.key === "Escape") cancelRename();
-                      }}
-                      autoFocus
-                      className="bg-gray-700 text-gray-200 border border-gray-600 rounded px-2 py-1 w-full"
-                    />
-                  ) : (
-                    <span className="truncate text-sm">{item.name}</span>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 ml-3 shrink-0">
-                  {!isRenaming && (
-                    <>
-                      {item.type === "file" && (
-                        <PreviewButton fileId={item.id} userId={userId} />
+                  <div className="flex  w-full gap-3 flex-1 cursor-pointer select-none overflow-hidden">
+                    <div className="flex items-center gap-3 flex-1 cursor-pointer select-none overflow-hidden">
+                      {item.type === "folder" ? (
+                        <FiFolder className="text-blue-400 shrink-0" size={20} />
+                      ) : (
+                        <FiFile className="text-gray-400 shrink-0" size={20} />
                       )}
 
-                      <button
-                        ref={isMenuOpen ? buttonRef : null}
-                        onClick={() => setMenuOpenFor(isMenuOpen ? null : item.id)}
-                        className="p-2 hover:bg-gray-700 rounded"
-                      >
-                        <FiMoreVertical className="text-gray-300" size={18} />
-                      </button>
-                    </>
-                  )}
-                </div>
-                </div>
-                {isRenaming && (
+                      {isRenaming ? (
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveRename();
+                            else if (e.key === "Escape") cancelRename();
+                          }}
+                          autoFocus
+                          className="bg-gray-700 text-gray-200 border border-gray-600 rounded px-2 py-1 w-full"
+                        />
+                      ) : (
+                        <span className="truncate text-sm">{item.name}</span>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 ml-1 shrink-0">
+                      {!isRenaming && (
+                        <>
+                          {item.type === "file" && (
+                            <PreviewButton fileId={item.id} userId={userId} />
+                          )}
+
+                          <button
+                            ref={isMenuOpen ? buttonRef : null}
+                            onClick={() => setMenuOpenFor(isMenuOpen ? null : item.id)}
+                            className="p-2 hover:bg-gray-700 rounded"
+                          >
+                            <FiMoreVertical className="text-gray-300" size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {isRenaming && (
                     <>
                       <button
                         onClick={saveRename}
@@ -286,8 +286,8 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                         Cancel
                       </button>
                     </>
-                  ) }
-</div>
+                  )}
+                </div>
                 {/* Dropdown Menu */}
                 {isMenuOpen && (
                   <div
