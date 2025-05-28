@@ -167,7 +167,7 @@ export const fetchMessages = async (token: string, from_user_id: string, to_user
     .from('Message')
     .select('*').or(
       `and(sender_id.eq.${from_user_id},receiver_id.eq.${to_user_id}),and(sender_id.eq.${to_user_id},receiver_id.eq.${from_user_id})`
-    );
+    ).order('created_at', { ascending: true });
   if (data) {
     data = data.map((element) => {
       element["content"] = decrypt(
