@@ -519,7 +519,7 @@ return ()=>{
                     </div>
                   </div>
                   {msg.content && (
-                    <div className="mt-1 sm:mt-2 rounded-lg cursor-pointer px-1 text-justify w-full">
+                    <div className="mt-1 sm:mt-2 rounded-lg cursor-pointer px-1 text-left w-full">
                       {msg.content}
                     </div>
                   )}
