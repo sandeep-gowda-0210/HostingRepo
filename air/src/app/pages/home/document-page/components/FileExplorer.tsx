@@ -226,6 +226,8 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                 }}
               >
                 {/* Icon & Name */}
+                <div className="w-full flex flex-col items-center sm:flex-row gap-[1rem]">
+                  <div className="flex items-center gap-3 flex-1 cursor-pointer select-none overflow-hidden">
                 <div className="flex items-center gap-3 flex-1 cursor-pointer select-none overflow-hidden">
                   {item.type === "folder" ? (
                     <FiFolder className="text-blue-400 shrink-0" size={20} />
@@ -252,22 +254,7 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 ml-3 shrink-0">
-                  {isRenaming ? (
-                    <>
-                      <button
-                        onClick={saveRename}
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-sm rounded"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={cancelRename}
-                        className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-3 py-1 text-sm rounded"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
+                  {!isRenaming && (
                     <>
                       {item.type === "file" && (
                         <PreviewButton fileId={item.id} userId={userId} />
@@ -283,28 +270,46 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                     </>
                   )}
                 </div>
-
+                </div>
+                {isRenaming && (
+                    <>
+                      <button
+                        onClick={saveRename}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-sm rounded w-[75%] sm:w-fit"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelRename}
+                        className="bg-gray-600 hover:bg-gray-500 text-gray-200 px-3 py-1 text-sm rounded  w-[75%] sm:w-fit"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) }
+</div>
                 {/* Dropdown Menu */}
                 {isMenuOpen && (
                   <div
                     ref={menuRef}
-                    className="absolute right-2 top-full mt-2 w-20 sm:w-40 min-w-max bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
+                    className="absolute right-2 top-full mt-2 min-w-[5rem] sm:min-w-[12rem] max-w-[50vw] bg-gray-800 border border-zinc-800 rounded-2xl shadow-xl z-50 overflow-hidden transition-all duration-200 ease-in-out"
                   >
                     <button
-                      className="w-full text-left px-4 py-2 hover:bg-gray-900 border-gray-600 border-b-1"
                       onClick={() => startRename(item)}
+                      className="w-full px-4 py-3 text-left text-sm sm:text-base text-zinc-200 hover:bg-zinc-800 transition-colors"
                     >
                       Rename
                     </button>
+
                     {item.type === "file" && (
                       <button
                         onClick={() => handleSendFile(item)}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-900 border-gray-600 border-b-1"
+                        className="w-full px-4 py-3 text-left text-sm sm:text-base text-zinc-200 hover:bg-zinc-800 transition-colors"
                       >
-                        {/* <span>Share</span>  <FiSend className="text-gray-300" size={18} /> */}
                         Share
                       </button>
                     )}
+
                     <DeleteButton
                       itemId={item.id}
                       userId={userId}
@@ -312,9 +317,11 @@ export default function FileExplorer({ userId }: FileExplorerProps) {
                         fetchItems();
                         setMenuOpenFor(null);
                       }}
+                      className="w-full px-4 py-3 text-left text-sm sm:text-base text-red-400 hover:bg-red-950 transition-colors"
                     />
                   </div>
                 )}
+
               </div>
             );
           })}

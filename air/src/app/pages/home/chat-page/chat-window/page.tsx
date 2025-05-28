@@ -237,7 +237,7 @@ function ChatWindow() {
   return selectedUser && <div className="flex flex-col h-full border rounded shadow w-full bg-gray-900 border-gray-700 text-gray-300">
     {/* Top Bar */}
     <div className="flex items-center justify-between p-2 sm:p-4 border-b border-gray-700 bg-gray-800 bg-opacity-80 backdrop-blur-sm">
-      <div className='flex items-center gap-5'>
+      <div className='flex items-center gap-2'>
         <div className="sm:hidden flex items-center px-1 bg-gray-800 ">
           <button
             className="text-blue-400 hover:text-white flex items-center gap-2"
@@ -255,7 +255,7 @@ function ChatWindow() {
           <h2 className="text-sm sm:text-lg font-semibold text-indigo-400">{selectedUser.user_name}</h2>
         </div>
       </div>
-      <div className="flex items-center gap-x-2 sm:gap-x-6 text-gray-400">
+      <div className="flex items-center gap-x-1 sm:gap-x-6 text-gray-400">
         {!autoReplyPage && isDifferentUser && (
           <svg
             role="button"
@@ -396,8 +396,8 @@ function ChatWindow() {
               <div
                 key={index}
                 className={`max-w-[50%] sm:max-w-[60%] w-fit p-2 rounded-lg text-sm sm:text-sm break-words ${msg.sender_id === currentUserId
-                    ? 'bg-[#414141] self-end ml-auto text-right'
-                    : 'bg-[#222322] self-start mr-auto'
+                  ? 'bg-[#414141] self-end ml-auto text-right'
+                  : 'bg-[#222322] self-start mr-auto'
                   }`}
               >
                 {msg.type === 'text' ? (
@@ -412,26 +412,29 @@ function ChatWindow() {
                   </>
                 ) : (
                   <div className="w-full max-w-xs sm:max-w-sm overflow-hidden rounded bg-[#404040] flex justify-center items-center flex-col">
-                    <div className="w-full max-h-20 sm:max-h-60 overflow-hidden">
+                    <div className="w-full max-h-20 sm:max-h-40 overflow-hidden">
                       {msg.type.startsWith("image/") ? (
                         <img
                           src={msg.file_url}
                           alt={msg.file?.name}
-                          className="w-full object-contain max-h-60 rounded"
+                          className="w-full object-contain max-h-60 rounded bg-black"
                         />
                       ) : msg.type === "application/pdf" ? (
                         <iframe
                           src={msg.file_url}
-                          className="w-full h-40 sm:h-60 rounded"
+                          className="w-full h-40 sm:h-60 rounded bg-black"
                           title="PDF Preview"
                         />
                       ) : msg.type.startsWith("video/") ? (
                         <video
                           src={msg.file_url}
                           controls
-                          className="w-full object-contain max-h-60 rounded"
+                          className="w-full object-contain max-h-60 rounded bg-black"
                         />
-                      ) : null}
+                      ) : (
+                        // Fallback UI for unsupported file types
+                        <div className="w-40 sm:w-50 h-10 sm:h-20 bg-black rounded flex items-center justify-between px-4 border">
+                        </div>)}
                     </div>
 
                     <div className="mt-1 sm:mt-2 rounded-lg cursor-pointer px-1 text-center w-full">
