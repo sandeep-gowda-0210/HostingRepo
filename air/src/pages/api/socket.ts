@@ -10,7 +10,6 @@ import { getUser } from "@/services/authService";
 import { setSocketServer, setUserSocket, getUserSocketMap, removeUserSocket } from "@/utils/socketStore";
 import { assert_generate_autoreply, autoReplyOllama } from "@/services/autoReplyService";
 import documentSearchHandler, { shareFiles } from "@/services/documentService";
-import { searchFiles } from "@/app/pages/home/document-page/utils/api";
 type NextApiResponseWithSocket = NextApiResponse & {
   socket: {
     server: HTTPServer & {

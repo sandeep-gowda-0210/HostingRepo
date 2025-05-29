@@ -267,21 +267,21 @@ export const sendScheduledMessage = async () => {
       else {
         console.log("successfully inserted");
 
-        if (sender_id && receiver_id) {
-          const now = new Date().toISOString();
+        // if (sender_id && receiver_id) {
+          // const now = new Date().toISOString();
           // console.log("setting user list ", sender_id,receiver_id,now);
-          const { error } = await supabaseSuperClient
-            .from('UserFriendList')
-            .upsert([{
-              sender_id,
-              receiver_id,
-              last_message_time: now,
-              notification_status: true
-            }], {
-              onConflict: 'sender_id,receiver_id'
-            });
+          // const { error } = await supabaseSuperClient
+          //   .from('UserFriendList')
+          //   .upsert([{
+          //     sender_id,
+          //     receiver_id,
+          //     last_message_time: now,
+          //     notification_status: true
+          //   }], {
+          //     onConflict: 'sender_id,receiver_id'
+          //   });
           // return NextResponse.json({ message: 'Messages sent and saved .' });
-        }
+        // }
         // return NextResponse.json({ message: 'Messages sent and not saved .' });
       }
       // return NextResponse.json({ message: error });

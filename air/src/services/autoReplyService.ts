@@ -58,7 +58,7 @@ export function getHistoryLocalDateTimeString(historyDays:number) {
     const offset = startDay.getTimezoneOffset();
     const localTime = new Date(startDay.getTime() - offset * 60 * 1000);
     return localTime.toISOString().slice(0, 16);
-  }
+}
 
 export const autoReplyOllama = async (token: string, from_user_id: string, to_user_id: string,) => {
       const supabaseWithToken = await createSupabaseWithToken(token);

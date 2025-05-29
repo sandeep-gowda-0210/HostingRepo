@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { createSupabaseWithToken } from "@/utils/socket";
 import { pushMessage } from './chatService';
 import { Message } from '@/app/pages/home/chat-page/chat-window/page';
-import { log } from 'node:console';
 
 export const createFolder = async (name: string, parent_id: string, token: string, user_id: string) => {
   try {
